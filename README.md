@@ -62,9 +62,9 @@ Traditionally, bridging these two environments requires:
 ```mermaid
 flowchart LR
     subgraph "Autonomous Edge (Lattice OS)"
-        L1["ALTIUS-600M Drone"] -->|Protobuf / JSON| LSDK["Anduril Lattice SDK<br/>(anduril.entitymanager.v1)"]
-        L2["Dive-LD AUV"] -->|Protobuf / JSON| LSDK
-        L3["Sentry Tower"] -->|Protobuf / JSON| LSDK
+        L1["Fury UAV (FURY-UAV-01)"] -->|Protobuf / JSON| LSDK["Anduril Lattice SDK<br/>(anduril.entitymanager.v1)"]
+        L2["Altius-600M Loitering Munition"] -->|Protobuf / JSON| LSDK
+        L3["Dive-LD AUV"] -->|Protobuf / JSON| LSDK
     end
 
     subgraph "PolyXML Polyglot Telemetry Bridge"
@@ -105,7 +105,7 @@ PolyXML provides **native dual-serialization parity** out of the box:
 ```mermaid
 flowchart TD
     subgraph Ingestion["1. Edge Ingestion"]
-        Lattice["Anduril Lattice Track<br/>(Protobuf / JSON)"]
+        Lattice["Anduril Lattice Autonomous Drone Track<br/>(Protobuf / JSON)"]
     end
 
     subgraph ModelLayer["2. Strongly-Typed Domain Model"]
@@ -217,12 +217,12 @@ Run the automated generation script across all 7 targets:
 
 ## 🗺 Semantic Field Mapping
 
-The bridge translates telemetry from `anduril.entitymanager.v1.Entity` into compliant USAF UCI `uci:EntityMT` messages:
+The bridge translates telemetry from `anduril.entitymanager.v1.Entity` (autonomous drone airplane telemetry) into compliant USAF UCI `uci:EntityMT` messages:
 
 | Anduril Lattice Telemetry Field | USAF UCI v2.5 XML Element | UCI XSD Type | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `EntityID/UUID` | `xs:string` | Unique global asset / track identifier |
-| `callsign` | `EntityID/Callsign` | `xs:string` | Human-readable tactical callsign |
+| `callsign` (`FURY-UAV-01`) | `EntityID/Callsign` | `xs:string` | Human-readable tactical drone callsign |
 | `timestamp` | `CreationTimestamp` | `xs:dateTime` | ISO 8601 UTC creation timestamp |
 | `timestamp` | `MessageHeader/Timestamp` | `xs:dateTime` | Header transmission timestamp |
 | `status` (`CONFIRMED`) | `EntityStatus` | `EntityStatusEnum` | Track status (`POTENTIAL`, `CONFIRMED`, `LOST`, `DROPPED`) |
@@ -232,8 +232,14 @@ The bridge translates telemetry from `anduril.entitymanager.v1.Entity` into comp
 | `kinematics.heading_degrees` | `Kinematics/Heading` | `xs:double` | True heading (0.0 to 360.0 degrees) |
 | `kinematics.ground_speed_mps` | `Kinematics/GroundSpeed` | `xs:double` | Horizontal velocity over ground (m/s) |
 | `kinematics.vertical_speed_mps` | `Kinematics/VerticalSpeed` | `xs:double` | Rate of climb / descent (m/s) |
+| `kinematics.airspeed_mps` | `Kinematics/Airspeed` | `xs:double` | Drone true airspeed (m/s) |
+| `kinematics.pitch_degrees` | `Kinematics/Pitch` | `xs:double` | Drone pitch attitude (-90.0 to 90.0 degrees) |
+| `kinematics.roll_degrees` | `Kinematics/Roll` | `xs:double` | Drone roll attitude (-180.0 to 180.0 degrees) |
 | `source_system` | `SourceSystem` | `xs:string` | Originating subsystem / mesh node ID |
-| `classification` (`SECRET`) | `SecurityInformation/Classification` | `ClassificationEnum` | Security marking (`UNCLASSIFIED`, `CONFIDENTIAL`, `SECRET`, `TOP_SECRET`) |
+| `flight_plan.flight_mode` | `FlightMode` | `xs:string` | Autopilot navigation mode |
+| `flight_plan.active_waypoint_id` | `ActiveWaypoint` | `xs:string` | Current navigation waypoint identifier |
+| `flight_plan.fuel_remaining_percent` | `FuelPercentage` | `xs:double` | Remaining fuel / endurance percentage (0-100%) |
+| `classification` (`UNCLASSIFIED`) | `SecurityInformation/Classification` | `ClassificationEnum` | Security marking (`UNCLASSIFIED`, `CONFIDENTIAL`, `SECRET`, `TOP_SECRET`) |
 
 ---
 
@@ -366,7 +372,7 @@ using namespace polyxml::generated;
 
 EntityMt entity;
 entity.object_state = ObjectStateEnum::Active;
-entity.security_information.classification = ClassificationEnum::Secret;
+entity.security_information.classification = ClassificationEnum::Unclassified;
 entity.message_data.kinematics.latitude = 34.9125;
 entity.message_data.kinematics.longitude = -117.8833;
 static_assert(XmlModel<EntityMt>); // Enforced via C++20 concept
@@ -393,7 +399,10 @@ public record KinematicsType(
     double altitude,
     Optional<Double> heading,
     Optional<Double> groundSpeed,
-    Optional<Double> verticalSpeed
+    Optional<Double> verticalSpeed,
+    Optional<Double> airspeed,
+    Optional<Double> pitch,
+    Optional<Double> roll
 ) {}
 ```
 
@@ -519,7 +528,7 @@ polyxml-defense-examples/
 │       ├── UCI_SecurityMarkings_v2_5_0.xsd   # Full DoD security markings XSD
 │       └── UCI_Versioning_v2_5_0.xsd         # UCI versioning attributes XSD
 ├── data/
-│   ├── lattice_entity.json        # Autonomous ALTIUS-600M loitering munition track payload
+│   ├── lattice_entity.json        # Autonomous flying drone airplane telemetry payload (FURY-UAV-01)
 │   └── uci_entity.xml             # Validated USAF UCI v2.5 Entity XML message
 ├── generated/                     # PolyXML compiler outputs (rebuilt via 'polyxml build')
 │   ├── rust/uci_entity_core.rs

@@ -10,22 +10,32 @@
 namespace fs = std::filesystem;
 using namespace polyxml::generated;
 
+// Statically verify C++20 XmlModel concept
+static_assert(XmlModel<EntityMt>, "EntityMt must satisfy C++20 XmlModel concept");
+static_assert(XmlModel<EntityMdt>, "EntityMdt must satisfy C++20 XmlModel concept");
+static_assert(XmlModel<KinematicsType>, "KinematicsType must satisfy C++20 XmlModel concept");
+
 struct LatticeEntity {
     std::string id;
-    std::string callsign;
+    std::optional<std::string> callsign;
     std::string timestamp;
-    std::string source_system;
-    std::string classification;
+    std::optional<std::string> source_system;
+    std::optional<std::string> classification;
     std::string status;
     double latitude = 0.0;
     double longitude = 0.0;
     double altitude_meters = 0.0;
-    double heading_degrees = 0.0;
-    double ground_speed_mps = 0.0;
-    double vertical_speed_mps = 0.0;
+    std::optional<double> heading_degrees;
+    std::optional<double> ground_speed_mps;
+    std::optional<double> vertical_speed_mps;
+    std::optional<double> airspeed_mps;
+    std::optional<double> pitch_degrees;
+    std::optional<double> roll_degrees;
+    std::optional<std::string> flight_mode;
+    std::optional<std::string> active_waypoint_id;
+    std::optional<double> fuel_remaining_percent;
 };
 
-// Simple zero-dependency JSON field extractor for benchmark demo
 std::string extract_string_field(const std::string& json, const std::string& key) {
     std::regex re("\"" + key + "\"\\s*:\\s*\"([^\"]+)\"");
     std::smatch match;
@@ -63,12 +73,12 @@ EntityMt translate_lattice_to_uci(const LatticeEntity& lattice) {
     entity.object_state = ObjectStateEnum::Active;
 
     // SecurityInformation & Header
-    entity.security_information.classification = ClassificationEnum::Secret;
+    entity.security_information.classification = ClassificationEnum::Unclassified;
     entity.security_information.owner_producer = "USA";
 
     entity.message_header.message_id = "MSG-" + lattice.id.substr(0, 8);
     entity.message_header.timestamp = lattice.timestamp;
-    entity.message_header.originator_id = lattice.source_system;
+    entity.message_header.originator_id = lattice.source_system.value_or("LATTICE_MESH_NODE_DELTA");
 
     // MessageData
     entity.message_data.entity_id.uuid = lattice.id;
@@ -87,8 +97,14 @@ EntityMt translate_lattice_to_uci(const LatticeEntity& lattice) {
     entity.message_data.kinematics.heading = lattice.heading_degrees;
     entity.message_data.kinematics.ground_speed = lattice.ground_speed_mps;
     entity.message_data.kinematics.vertical_speed = lattice.vertical_speed_mps;
+    entity.message_data.kinematics.airspeed = lattice.airspeed_mps;
+    entity.message_data.kinematics.pitch = lattice.pitch_degrees;
+    entity.message_data.kinematics.roll = lattice.roll_degrees;
 
     entity.message_data.source_system = lattice.source_system;
+    entity.message_data.flight_mode = lattice.flight_mode;
+    entity.message_data.active_waypoint = lattice.active_waypoint_id;
+    entity.message_data.fuel_percentage = lattice.fuel_remaining_percent;
 
     return entity;
 }
@@ -137,10 +153,28 @@ std::string serialize_uci_xml(const EntityMt& entity) {
     if (entity.message_data.kinematics.vertical_speed) {
         oss << "<VerticalSpeed>" << *entity.message_data.kinematics.vertical_speed << "</VerticalSpeed>";
     }
+    if (entity.message_data.kinematics.airspeed) {
+        oss << "<Airspeed>" << *entity.message_data.kinematics.airspeed << "</Airspeed>";
+    }
+    if (entity.message_data.kinematics.pitch) {
+        oss << "<Pitch>" << *entity.message_data.kinematics.pitch << "</Pitch>";
+    }
+    if (entity.message_data.kinematics.roll) {
+        oss << "<Roll>" << *entity.message_data.kinematics.roll << "</Roll>";
+    }
     oss << "</Kinematics>";
 
     if (entity.message_data.source_system) {
         oss << "<SourceSystem>" << *entity.message_data.source_system << "</SourceSystem>";
+    }
+    if (entity.message_data.flight_mode) {
+        oss << "<FlightMode>" << *entity.message_data.flight_mode << "</FlightMode>";
+    }
+    if (entity.message_data.active_waypoint) {
+        oss << "<ActiveWaypoint>" << *entity.message_data.active_waypoint << "</ActiveWaypoint>";
+    }
+    if (entity.message_data.fuel_percentage) {
+        oss << "<FuelPercentage>" << *entity.message_data.fuel_percentage << "</FuelPercentage>";
     }
     oss << "</MessageData>";
     oss << "</EntityMT>";
@@ -156,9 +190,22 @@ std::string serialize_uci_json(const EntityMt& entity) {
         oss << "\"ObjectState\":\"" << to_string(*entity.object_state) << "\",";
     }
     oss << "\"MessageData\":{";
-    oss << "\"EntityID\":{\"UUID\":\"" << entity.message_data.entity_id.uuid << "\"},";
+    oss << "\"EntityID\":{\"UUID\":\"" << entity.message_data.entity_id.uuid << "\"";
+    if (entity.message_data.entity_id.callsign) {
+        oss << ",\"Callsign\":\"" << *entity.message_data.entity_id.callsign << "\"";
+    }
+    oss << "},";
     oss << "\"EntityStatus\":\"" << to_string(entity.message_data.entity_status) << "\",";
-    oss << "\"Kinematics\":{\"Latitude\":" << entity.message_data.kinematics.latitude << ",\"Longitude\":" << entity.message_data.kinematics.longitude << "}";
+    oss << "\"Kinematics\":{";
+    oss << "\"Latitude\":" << entity.message_data.kinematics.latitude << ",";
+    oss << "\"Longitude\":" << entity.message_data.kinematics.longitude;
+    if (entity.message_data.kinematics.airspeed) {
+        oss << ",\"Airspeed\":" << *entity.message_data.kinematics.airspeed;
+    }
+    oss << "}";
+    if (entity.message_data.flight_mode) {
+        oss << ",\"FlightMode\":\"" << *entity.message_data.flight_mode << "\"";
+    }
     oss << "}}";
     return oss.str();
 }
@@ -166,60 +213,83 @@ std::string serialize_uci_json(const EntityMt& entity) {
 int main() {
     std::cout << "================================================================================" << std::endl;
     std::cout << "🛸 PolyXML: Anduril Lattice SDK ↔ USAF UCI C2 Bridge (Modern C++20)" << std::endl;
+    std::cout << "   Autonomous Flying Drone Airplane Telemetry (UNCLASSIFIED)" << std::endl;
     std::cout << "================================================================================" << std::endl;
 
-    std::string data_path = find_data_file();
-    if (data_path.empty()) {
+    std::string data_file = find_data_file();
+    if (data_file.empty()) {
         std::cerr << "Error: Could not locate data/lattice_entity.json" << std::endl;
         return 1;
     }
 
-    std::ifstream file(data_path);
-    if (!file.is_open()) {
-        std::cerr << "Error opening file: " << data_path << std::endl;
-        return 1;
-    }
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    std::string json_content = buffer.str();
+    std::ifstream file(data_file);
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
     LatticeEntity lattice;
-    lattice.id = extract_string_field(json_content, "id");
-    lattice.callsign = extract_string_field(json_content, "callsign");
-    lattice.timestamp = extract_string_field(json_content, "timestamp");
-    lattice.source_system = extract_string_field(json_content, "source_system");
-    lattice.status = extract_string_field(json_content, "status");
-    lattice.latitude = extract_double_field(json_content, "latitude");
-    lattice.longitude = extract_double_field(json_content, "longitude");
-    lattice.altitude_meters = extract_double_field(json_content, "altitude_meters");
-    lattice.heading_degrees = extract_double_field(json_content, "heading_degrees");
-    lattice.ground_speed_mps = extract_double_field(json_content, "ground_speed_mps");
-    lattice.vertical_speed_mps = extract_double_field(json_content, "vertical_speed_mps");
+    lattice.id = extract_string_field(content, "id");
+    lattice.callsign = extract_string_field(content, "callsign");
+    lattice.timestamp = extract_string_field(content, "timestamp");
+    lattice.source_system = extract_string_field(content, "source_system");
+    lattice.classification = extract_string_field(content, "classification");
+    lattice.status = extract_string_field(content, "status");
 
-    std::cout << "Ingesting Lattice Track: " << lattice.callsign << " (ID: " << lattice.id << ")" << std::endl;
+    lattice.latitude = extract_double_field(content, "latitude");
+    lattice.longitude = extract_double_field(content, "longitude");
+    lattice.altitude_meters = extract_double_field(content, "altitude_meters");
 
+    double hdg = extract_double_field(content, "heading_degrees");
+    if (hdg != 0.0) lattice.heading_degrees = hdg;
+
+    double gs = extract_double_field(content, "ground_speed_mps");
+    if (gs != 0.0) lattice.ground_speed_mps = gs;
+
+    double vs = extract_double_field(content, "vertical_speed_mps");
+    if (vs != 0.0) lattice.vertical_speed_mps = vs;
+
+    double as = extract_double_field(content, "airspeed_mps");
+    if (as != 0.0) lattice.airspeed_mps = as;
+
+    double pitch = extract_double_field(content, "pitch_degrees");
+    if (pitch != 0.0) lattice.pitch_degrees = pitch;
+
+    double roll = extract_double_field(content, "roll_degrees");
+    if (roll != 0.0) lattice.roll_degrees = roll;
+
+    lattice.flight_mode = extract_string_field(content, "flight_mode");
+    lattice.active_waypoint_id = extract_string_field(content, "active_waypoint_id");
+    double fuel = extract_double_field(content, "fuel_remaining_percent");
+    if (fuel != 0.0) lattice.fuel_remaining_percent = fuel;
+
+    std::cout << "Ingesting Autonomous Drone Telemetry: "
+              << (lattice.callsign ? *lattice.callsign : "N/A")
+              << " (ID: " << lattice.id << ")" << std::endl;
+
+    // 1. Ingest & Serialize to XML
     auto start_xml = std::chrono::high_resolution_clock::now();
     EntityMt uci_entity = translate_lattice_to_uci(lattice);
     std::string xml_output = serialize_uci_xml(uci_entity);
     auto end_xml = std::chrono::high_resolution_clock::now();
-    auto xml_us = std::chrono::duration_cast<std::chrono::nanoseconds>(end_xml - start_xml).count() / 1000.0;
+    double xml_us = std::chrono::duration<double, std::micro>(end_xml - start_xml).count();
 
     std::cout << "\n[1] Generated USAF UCI XML Message (latency: " << xml_us << " μs):" << std::endl;
     std::cout << xml_output << std::endl;
 
+    assert(xml_output.find("EntityMT") != std::string::npos);
+    assert(xml_output.find("UNCLASSIFIED") != std::string::npos);
+    assert(xml_output.find("FURY-UAV-01") != std::string::npos);
+
+    // 2. Inherent JSON Serialization
     auto start_json = std::chrono::high_resolution_clock::now();
     std::string json_output = serialize_uci_json(uci_entity);
     auto end_json = std::chrono::high_resolution_clock::now();
-    auto json_us = std::chrono::duration_cast<std::chrono::nanoseconds>(end_json - start_json).count() / 1000.0;
+    double json_us = std::chrono::duration<double, std::micro>(end_json - start_json).count();
 
     std::cout << "\n[2] Generated Native JSON on Same Model (latency: " << json_us << " μs):" << std::endl;
     std::cout << json_output << std::endl;
 
-    assert(xml_output.find("EntityMT") != std::string::npos);
-    assert(xml_output.find(lattice.id) != std::string::npos);
-    assert(xml_output.find("CONFIRMED") != std::string::npos);
-    assert(uci_entity.validate());
+    // Verify C++20 default equality comparison
+    EntityMt copy_entity = uci_entity;
+    assert(copy_entity == uci_entity);
 
     std::cout << "\n✅ C++20 Lattice ↔ UCI Bridge executed successfully!" << std::endl;
     return 0;

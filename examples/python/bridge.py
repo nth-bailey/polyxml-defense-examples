@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Anduril Lattice SDK to USAF UCI v2.5 Telemetry Bridge (Python).
 
-Translates incoming Anduril Lattice entity JSON telemetry into strongly-typed
-Open-Arsenal UCI v2.5 domain models using PolyXML, showcasing dual-format
+Translates incoming Anduril Lattice autonomous drone airplane JSON telemetry into
+strongly-typed Open-Arsenal UCI v2.5 domain models using PolyXML, showcasing dual-format
 XML ↔ JSON data-binding, inherent codecs, and zero-copy streaming transcoding.
 """
 
@@ -35,10 +35,11 @@ def translate_lattice_to_uci(lattice_dict: dict) -> EntityMt:
     """Translate an Anduril Lattice Entity dictionary into a typed UCI EntityMT."""
     loc = lattice_dict.get("location", {})
     kin = lattice_dict.get("kinematics", {})
+    fp = lattice_dict.get("flight_plan", {})
 
     return EntityMt(
         security_information=SecurityInformationType(
-            classification=ClassificationEnum(lattice_dict.get("classification", "SECRET")),
+            classification=ClassificationEnum(lattice_dict.get("classification", "UNCLASSIFIED")),
             owner_producer="USA",
         ),
         message_header=HeaderType(
@@ -61,8 +62,14 @@ def translate_lattice_to_uci(lattice_dict: dict) -> EntityMt:
                 heading=kin.get("heading_degrees"),
                 ground_speed=kin.get("ground_speed_mps"),
                 vertical_speed=kin.get("vertical_speed_mps"),
+                airspeed=kin.get("airspeed_mps"),
+                pitch=kin.get("pitch_degrees"),
+                roll=kin.get("roll_degrees"),
             ),
             source_system=lattice_dict.get("source_system"),
+            flight_mode=fp.get("flight_mode"),
+            active_waypoint=fp.get("active_waypoint_id"),
+            fuel_percentage=fp.get("fuel_remaining_percent"),
         ),
     )
 
@@ -74,9 +81,9 @@ def main() -> None:
 
     print("================================================================================")
     print("🛸 PolyXML: Anduril Lattice SDK ↔ USAF UCI C2 Bridge (Python 3.12+)")
-    print("   Dual-Format Data-Binding: Inherent XML ↔ JSON Codecs & Streaming Transcoder")
+    print("   Autonomous Flying Drone Airplane Telemetry (UNCLASSIFIED)")
     print("================================================================================")
-    print(f"Ingesting Lattice Track: {lattice_data.get('callsign')} (ID: {lattice_data.get('id')})")
+    print(f"Ingesting Autonomous Drone Telemetry: {lattice_data.get('callsign')} (ID: {lattice_data.get('id')})")
 
     # 1. Translate & Serialize to XML
     start_xml = time.perf_counter()
@@ -90,6 +97,7 @@ def main() -> None:
 
     assert "EntityMT" in xml_str
     assert lattice_data["id"] in xml_str
+    assert "UNCLASSIFIED" in xml_str
 
     # 2. Inherent JSON Serialization on the exact same model instance
     start_json = time.perf_counter()
@@ -109,11 +117,14 @@ def main() -> None:
     print(f"    Restored UUID: {restored_model.message_data.entity_id.uuid}")
     print(f"    Restored Callsign: {restored_model.message_data.entity_id.callsign}")
     print(f"    Restored Coordinates: ({restored_model.message_data.kinematics.latitude}, {restored_model.message_data.kinematics.longitude})")
-    print(f"    Restored Status: {restored_model.message_data.entity_status.value}")
+    print(f"    Restored Airspeed: {restored_model.message_data.kinematics.airspeed} m/s | Pitch: {restored_model.message_data.kinematics.pitch}° | Roll: {restored_model.message_data.kinematics.roll}°")
+    print(f"    Restored Flight Mode: {restored_model.message_data.flight_mode}")
+    print(f"    Restored Classification: {restored_model.security_information.classification.value}")
 
     assert restored_model.message_data.entity_id.uuid == lattice_data["id"]
     assert restored_model.message_data.entity_id.callsign == lattice_data["callsign"]
     assert restored_model.message_data.kinematics.latitude == lattice_data["location"]["latitude"]
+    assert restored_model.security_information.classification == ClassificationEnum.UNCLASSIFIED
 
     # 4. High-Performance Pure-Rust Streaming Transcoding
     print("\n[4] Native Rust Streaming XML ↔ JSON Transcoder (polyxml.xml_to_json / json_to_xml):")
@@ -123,7 +134,7 @@ def main() -> None:
     transcode_us = (time.perf_counter() - start_transcode) * 1_000_000
 
     print(f"    Roundtrip Transcode Latency: {transcode_us:.2f} μs (pure Rust C-extension)")
-    print(f"    Output Sample: {stream_json.decode('utf-8')[:120].strip()}...")
+    print(f"    Output Sample: {stream_json.decode('utf-8')[:140].strip()}...")
 
     print("\n✅ Python Lattice ↔ UCI Bridge executed successfully with full dual-format parity!")
 

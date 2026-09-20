@@ -25,6 +25,26 @@ interface LatticeEntity {
     heading_degrees?: number;
     ground_speed_mps?: number;
     vertical_speed_mps?: number;
+    airspeed_mps?: number;
+    pitch_degrees?: number;
+    roll_degrees?: number;
+  };
+  flight_plan?: {
+    flight_mode?: string;
+    mission_id?: string;
+    active_waypoint_id?: string;
+    target_altitude_meters?: number;
+    target_airspeed_mps?: number;
+    fuel_remaining_percent?: number;
+    battery_backup_percent?: number;
+    estimated_endurance_minutes?: number;
+  };
+  sensor_payload?: {
+    sensor_type?: string;
+    gimbal_azimuth_deg?: number;
+    gimbal_elevation_deg?: number;
+    laser_designator_armed?: boolean;
+    tracking_mode?: string;
   };
 }
 
@@ -64,7 +84,7 @@ function translateLatticeToUCI(lattice: LatticeEntity): EntityMt {
 
   return {
     securityInformation: {
-      classification: ClassificationEnum.Secret,
+      classification: ClassificationEnum.Unclassified,
       ownerProducer: "USA",
     },
     messageHeader: {
@@ -87,8 +107,14 @@ function translateLatticeToUCI(lattice: LatticeEntity): EntityMt {
         heading: lattice.kinematics.heading_degrees,
         groundSpeed: lattice.kinematics.ground_speed_mps,
         verticalSpeed: lattice.kinematics.vertical_speed_mps,
+        airspeed: lattice.kinematics.airspeed_mps,
+        pitch: lattice.kinematics.pitch_degrees,
+        roll: lattice.kinematics.roll_degrees,
       },
       sourceSystem: lattice.source_system,
+      flightMode: lattice.flight_plan?.flight_mode,
+      activeWaypoint: lattice.flight_plan?.active_waypoint_id,
+      fuelPercentage: lattice.flight_plan?.fuel_remaining_percent,
     },
   };
 }
@@ -132,9 +158,27 @@ function serializeToXml(entity: EntityMt): string {
     entity.messageData.kinematics.verticalSpeed !== undefined
       ? `      <VerticalSpeed>${entity.messageData.kinematics.verticalSpeed}</VerticalSpeed>`
       : "",
+    entity.messageData.kinematics.airspeed !== undefined
+      ? `      <Airspeed>${entity.messageData.kinematics.airspeed}</Airspeed>`
+      : "",
+    entity.messageData.kinematics.pitch !== undefined
+      ? `      <Pitch>${entity.messageData.kinematics.pitch}</Pitch>`
+      : "",
+    entity.messageData.kinematics.roll !== undefined
+      ? `      <Roll>${entity.messageData.kinematics.roll}</Roll>`
+      : "",
     "    </Kinematics>",
     entity.messageData.sourceSystem
       ? `    <SourceSystem>${entity.messageData.sourceSystem}</SourceSystem>`
+      : "",
+    entity.messageData.flightMode
+      ? `    <FlightMode>${entity.messageData.flightMode}</FlightMode>`
+      : "",
+    entity.messageData.activeWaypoint
+      ? `    <ActiveWaypoint>${entity.messageData.activeWaypoint}</ActiveWaypoint>`
+      : "",
+    entity.messageData.fuelPercentage !== undefined
+      ? `    <FuelPercentage>${entity.messageData.fuelPercentage}</FuelPercentage>`
       : "",
     "  </MessageData>",
     "</EntityMT>",
@@ -146,13 +190,14 @@ function serializeToXml(entity: EntityMt): string {
 function main() {
   console.log("================================================================================");
   console.log("🛸 PolyXML: Anduril Lattice SDK ↔ USAF UCI C2 Bridge (TypeScript 5+ & Zod)");
+  console.log("   Autonomous Flying Drone Airplane Telemetry (UNCLASSIFIED)");
   console.log("================================================================================");
 
   const dataPath = findDataFile();
   const rawData = fs.readFileSync(dataPath, "utf-8");
   const lattice: LatticeEntity = JSON.parse(rawData);
 
-  console.log(`Ingesting Lattice Track: ${lattice.callsign ?? "N/A"} (ID: ${lattice.id})`);
+  console.log(`Ingesting Autonomous Drone Telemetry: ${lattice.callsign ?? "N/A"} (ID: ${lattice.id})`);
 
   // Translate
   const t0 = performance.now();
@@ -183,6 +228,9 @@ function main() {
   console.log(`    Restored UUID: ${validatedFromJson.messageData.entityId.uuid}`);
   console.log(`    Restored Callsign: ${validatedFromJson.messageData.entityId.callsign}`);
   console.log(`    Restored Coordinates: (${validatedFromJson.messageData.kinematics.latitude}, ${validatedFromJson.messageData.kinematics.longitude})`);
+  console.log(`    Restored Airspeed: ${validatedFromJson.messageData.kinematics.airspeed} m/s | Pitch: ${validatedFromJson.messageData.kinematics.pitch}° | Roll: ${validatedFromJson.messageData.kinematics.roll}°`);
+  console.log(`    Restored Flight Mode: ${validatedFromJson.messageData.flightMode}`);
+  console.log(`    Restored Waypoint: ${validatedFromJson.messageData.activeWaypoint} | Fuel: ${validatedFromJson.messageData.fuelPercentage}%`);
 
   if (validatedFromJson.messageData.entityId.uuid !== lattice.id) {
     throw new Error("UUID mismatch in TypeScript JSON roundtrip");
@@ -193,6 +241,9 @@ function main() {
   }
   if (!xmlOutput.includes(lattice.id)) {
     throw new Error("Missing UUID in XML output");
+  }
+  if (!xmlOutput.includes("UNCLASSIFIED")) {
+    throw new Error("Missing UNCLASSIFIED classification in XML output");
   }
 
   console.log("\n✅ TypeScript Lattice ↔ UCI Bridge executed successfully with Zod runtime validation!");

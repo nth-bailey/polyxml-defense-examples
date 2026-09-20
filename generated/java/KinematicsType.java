@@ -14,6 +14,9 @@ public record KinematicsType(
     double altitude,
     java.util.Optional<Double> heading,
     java.util.Optional<Double> groundSpeed,
-    java.util.Optional<Double> verticalSpeed
+    java.util.Optional<Double> verticalSpeed,
+    java.util.Optional<Double> airspeed,
+    java.util.Optional<Double> pitch,
+    java.util.Optional<Double> roll
 ) {
 }

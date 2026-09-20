@@ -79,6 +79,9 @@ class EntityMdt:
     entity_status: EntityStatusEnum = field(metadata={"type": "Element", "name": "EntityStatus", "json_name": "EntityStatus", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
     kinematics: KinematicsType = field(metadata={"type": "Element", "name": "Kinematics", "json_name": "Kinematics", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
     source_system: str | None = field(default=None, metadata={"type": "Element", "name": "SourceSystem", "json_name": "SourceSystem", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
+    flight_mode: str | None = field(default=None, metadata={"type": "Element", "name": "FlightMode", "json_name": "FlightMode", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
+    active_waypoint: str | None = field(default=None, metadata={"type": "Element", "name": "ActiveWaypoint", "json_name": "ActiveWaypoint", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
+    fuel_percentage: float | None = field(default=None, metadata={"type": "Element", "name": "FuelPercentage", "json_name": "FuelPercentage", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
 
     @classmethod
     def from_xml(cls, data: bytes | str) -> Self:
@@ -256,6 +259,9 @@ class KinematicsType:
     heading: float | None = field(default=None, metadata={"type": "Element", "name": "Heading", "json_name": "Heading", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
     ground_speed: float | None = field(default=None, metadata={"type": "Element", "name": "GroundSpeed", "json_name": "GroundSpeed", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
     vertical_speed: float | None = field(default=None, metadata={"type": "Element", "name": "VerticalSpeed", "json_name": "VerticalSpeed", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
+    airspeed: float | None = field(default=None, metadata={"type": "Element", "name": "Airspeed", "json_name": "Airspeed", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
+    pitch: float | None = field(default=None, metadata={"type": "Element", "name": "Pitch", "json_name": "Pitch", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
+    roll: float | None = field(default=None, metadata={"type": "Element", "name": "Roll", "json_name": "Roll", "namespace": "https://www.vdl.afrl.af.mil/programs/oam"})
 
     @classmethod
     def from_xml(cls, data: bytes | str) -> Self:

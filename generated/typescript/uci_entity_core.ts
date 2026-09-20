@@ -58,6 +58,9 @@ export interface KinematicsType {
   heading?: number;
   groundSpeed?: number;
   verticalSpeed?: number;
+  airspeed?: number;
+  pitch?: number;
+  roll?: number;
 }
 
 export const KinematicsTypeSchema = z.object({
@@ -67,6 +70,9 @@ export const KinematicsTypeSchema = z.object({
   heading: z.number().optional(),
   groundSpeed: z.number().optional(),
   verticalSpeed: z.number().optional(),
+  airspeed: z.number().optional(),
+  pitch: z.number().optional(),
+  roll: z.number().optional(),
 });
 
 export interface EntityMdt {
@@ -75,6 +81,9 @@ export interface EntityMdt {
   entityStatus: EntityStatusEnum;
   kinematics: KinematicsType;
   sourceSystem?: string;
+  flightMode?: string;
+  activeWaypoint?: string;
+  fuelPercentage?: number;
 }
 
 export const EntityMdtSchema = z.object({
@@ -83,6 +92,9 @@ export const EntityMdtSchema = z.object({
   entityStatus: EntityStatusEnumSchema,
   kinematics: KinematicsTypeSchema,
   sourceSystem: z.string().optional(),
+  flightMode: z.string().optional(),
+  activeWaypoint: z.string().optional(),
+  fuelPercentage: z.number().optional(),
 });
 
 export interface SecurityInformationType {

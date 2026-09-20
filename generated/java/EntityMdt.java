@@ -13,6 +13,9 @@ public record EntityMdt(
     java.time.Instant creationTimestamp,
     EntityStatusEnum entityStatus,
     KinematicsType kinematics,
-    java.util.Optional<String> sourceSystem
+    java.util.Optional<String> sourceSystem,
+    java.util.Optional<String> flightMode,
+    java.util.Optional<String> activeWaypoint,
+    java.util.Optional<Double> fuelPercentage
 ) {
 }

@@ -147,6 +147,9 @@ struct KinematicsType {
     std::optional<double> heading = std::nullopt;
     std::optional<double> ground_speed = std::nullopt;
     std::optional<double> vertical_speed = std::nullopt;
+    std::optional<double> airspeed = std::nullopt;
+    std::optional<double> pitch = std::nullopt;
+    std::optional<double> roll = std::nullopt;
 
     bool operator==(const KinematicsType&) const = default;
 
@@ -172,6 +175,9 @@ struct EntityMdt {
     EntityStatusEnum entity_status = {};
     KinematicsType kinematics = {};
     std::optional<std::string> source_system = std::nullopt;
+    std::optional<std::string> flight_mode = std::nullopt;
+    std::optional<std::string> active_waypoint = std::nullopt;
+    std::optional<double> fuel_percentage = std::nullopt;
 
     bool operator==(const EntityMdt&) const = default;
 

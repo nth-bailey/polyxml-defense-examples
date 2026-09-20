@@ -140,10 +140,13 @@ public record EntityMdt(
     [property: XmlElement("CreationTimestamp"), JsonPropertyName("CreationTimestamp")] DateTimeOffset CreationTimestamp,
     [property: XmlElement("EntityStatus"), JsonPropertyName("EntityStatus")] EntityStatusEnum EntityStatus,
     [property: XmlElement("Kinematics"), JsonPropertyName("Kinematics")] KinematicsType Kinematics,
-    [property: XmlElement("SourceSystem"), JsonPropertyName("SourceSystem")] string? SourceSystem = null
+    [property: XmlElement("SourceSystem"), JsonPropertyName("SourceSystem")] string? SourceSystem = null,
+    [property: XmlElement("FlightMode"), JsonPropertyName("FlightMode")] string? FlightMode = null,
+    [property: XmlElement("ActiveWaypoint"), JsonPropertyName("ActiveWaypoint")] string? ActiveWaypoint = null,
+    [property: XmlElement("FuelPercentage"), JsonPropertyName("FuelPercentage")] double? FuelPercentage = null
 ) : IValidatableObject
 {
-    public EntityMdt() : this(default(EntityIdType)!, default(DateTimeOffset)!, default(EntityStatusEnum)!, default(KinematicsType)!, default) { }
+    public EntityMdt() : this(default(EntityIdType)!, default(DateTimeOffset)!, default(EntityStatusEnum)!, default(KinematicsType)!, default, default, default, default) { }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -187,10 +190,13 @@ public record KinematicsType(
     [property: XmlElement("Altitude"), JsonPropertyName("Altitude")] double Altitude,
     [property: XmlElement("Heading"), JsonPropertyName("Heading")] double? Heading = null,
     [property: XmlElement("GroundSpeed"), JsonPropertyName("GroundSpeed")] double? GroundSpeed = null,
-    [property: XmlElement("VerticalSpeed"), JsonPropertyName("VerticalSpeed")] double? VerticalSpeed = null
+    [property: XmlElement("VerticalSpeed"), JsonPropertyName("VerticalSpeed")] double? VerticalSpeed = null,
+    [property: XmlElement("Airspeed"), JsonPropertyName("Airspeed")] double? Airspeed = null,
+    [property: XmlElement("Pitch"), JsonPropertyName("Pitch")] double? Pitch = null,
+    [property: XmlElement("Roll"), JsonPropertyName("Roll")] double? Roll = null
 ) : IValidatableObject
 {
-    public KinematicsType() : this(default(double)!, default(double)!, default(double)!, default, default, default) { }
+    public KinematicsType() : this(default(double)!, default(double)!, default(double)!, default, default, default, default, default, default) { }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

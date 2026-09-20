@@ -79,6 +79,9 @@ type EntityMdt struct {
     EntityStatus EntityStatusEnum `xml:"EntityStatus" json:"EntityStatus"`
     Kinematics KinematicsType `xml:"Kinematics" json:"Kinematics"`
     SourceSystem *string `xml:"SourceSystem,omitempty" json:"SourceSystem,omitempty"`
+    FlightMode *string `xml:"FlightMode,omitempty" json:"FlightMode,omitempty"`
+    ActiveWaypoint *string `xml:"ActiveWaypoint,omitempty" json:"ActiveWaypoint,omitempty"`
+    FuelPercentage *float64 `xml:"FuelPercentage,omitempty" json:"FuelPercentage,omitempty"`
 }
 
 func (s EntityMdt) Validate() error {
@@ -115,6 +118,9 @@ type KinematicsType struct {
     Heading *float64 `xml:"Heading,omitempty" json:"Heading,omitempty"`
     GroundSpeed *float64 `xml:"GroundSpeed,omitempty" json:"GroundSpeed,omitempty"`
     VerticalSpeed *float64 `xml:"VerticalSpeed,omitempty" json:"VerticalSpeed,omitempty"`
+    Airspeed *float64 `xml:"Airspeed,omitempty" json:"Airspeed,omitempty"`
+    Pitch *float64 `xml:"Pitch,omitempty" json:"Pitch,omitempty"`
+    Roll *float64 `xml:"Roll,omitempty" json:"Roll,omitempty"`
 }
 
 func (s KinematicsType) Validate() error {

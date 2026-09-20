@@ -2,14 +2,14 @@ syntax = "proto3";
 
 package anduril.entitymanager.v1;
 
-// Anduril Lattice SDK - Entity Definition
+// Anduril Lattice SDK - Autonomous Drone Airplane Entity Definition
 // Canonical definition mirroring buf.build/anduril/lattice-sdk
 
 message Entity {
   // Unique entity ID (UUID / track ID)
   string id = 1;
 
-  // Track / asset callsign (e.g. "ALTIUS-600M-01", "GHOST-4")
+  // Track / asset callsign (e.g. "FURY-UAV-01", "ALTIUS-600M-01")
   string callsign = 2;
 
   // Detection / update timestamp in ISO-8601 or epoch millis
@@ -27,8 +27,14 @@ message Entity {
   // Geospatial position
   Location location = 7;
 
-  // Velocity and motion dynamics
+  // Aerodynamic velocity, attitudes, and motion dynamics
   Kinematics kinematics = 8;
+
+  // Autonomous flight management telemetry
+  AutonomousFlightPlan flight_plan = 9;
+
+  // Multispectral sensor gimbal payload telemetry
+  SensorPayload sensor_payload = 10;
 }
 
 message Location {
@@ -51,6 +57,58 @@ message Kinematics {
 
   // Vertical speed (climb/descent) in meters per second
   double vertical_speed_mps = 3;
+
+  // True airspeed in meters per second
+  double airspeed_mps = 4;
+
+  // Pitch attitude angle in degrees [-90.0, 90.0] (positive nose up)
+  double pitch_degrees = 5;
+
+  // Roll bank angle in degrees [-180.0, 180.0] (positive right wing down)
+  double roll_degrees = 6;
+}
+
+message AutonomousFlightPlan {
+  // Autonomy flight mode (e.g. "AUTONOMOUS_WAYPOINT_NAVIGATION", "LOITER")
+  string flight_mode = 1;
+
+  // Mission task identifier
+  string mission_id = 2;
+
+  // Currently tracked navigation waypoint ID
+  string active_waypoint_id = 3;
+
+  // Target command altitude in meters
+  double target_altitude_meters = 4;
+
+  // Target cruise airspeed in meters per second
+  double target_airspeed_mps = 5;
+
+  // Fuel remaining percentage [0.0, 100.0]
+  double fuel_remaining_percent = 6;
+
+  // Battery backup percentage [0.0, 100.0]
+  double battery_backup_percent = 7;
+
+  // Estimated flight endurance remaining in minutes
+  double estimated_endurance_minutes = 8;
+}
+
+message SensorPayload {
+  // Payload sensor type (e.g. "EO_IR_MULTISPECTRAL_GIMBAL")
+  string sensor_type = 1;
+
+  // Gimbal relative azimuth angle in degrees [-180.0, 180.0]
+  double gimbal_azimuth_deg = 2;
+
+  // Gimbal elevation angle in degrees [-90.0, 90.0]
+  double gimbal_elevation_deg = 3;
+
+  // Laser target designator armed flag
+  bool laser_designator_armed = 4;
+
+  // Active tracking mode
+  string tracking_mode = 5;
 }
 
 enum Classification {

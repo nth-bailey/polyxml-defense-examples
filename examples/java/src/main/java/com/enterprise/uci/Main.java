@@ -16,13 +16,20 @@ public class Main {
         String callsign,
         String timestamp,
         String sourceSystem,
+        String classification,
         String status,
         double latitude,
         double longitude,
         double altitudeMeters,
         Double headingDegrees,
         Double groundSpeedMps,
-        Double verticalSpeedMps
+        Double verticalSpeedMps,
+        Double airspeedMps,
+        Double pitchDegrees,
+        Double rollDegrees,
+        String flightMode,
+        String activeWaypointId,
+        Double fuelRemainingPercent
     ) {}
 
     private static String extractString(String json, String key) {
@@ -86,7 +93,10 @@ public class Main {
             lattice.altitudeMeters,
             Optional.ofNullable(lattice.headingDegrees),
             Optional.ofNullable(lattice.groundSpeedMps),
-            Optional.ofNullable(lattice.verticalSpeedMps)
+            Optional.ofNullable(lattice.verticalSpeedMps),
+            Optional.ofNullable(lattice.airspeedMps),
+            Optional.ofNullable(lattice.pitchDegrees),
+            Optional.ofNullable(lattice.rollDegrees)
         );
 
         EntityMdt mdt = new EntityMdt(
@@ -94,7 +104,10 @@ public class Main {
             ts,
             status,
             kinematics,
-            Optional.ofNullable(lattice.sourceSystem)
+            Optional.ofNullable(lattice.sourceSystem),
+            Optional.ofNullable(lattice.flightMode),
+            Optional.ofNullable(lattice.activeWaypointId),
+            Optional.ofNullable(lattice.fuelRemainingPercent)
         );
 
         return new EntityMt(
@@ -107,7 +120,7 @@ public class Main {
         StringBuilder sb = new StringBuilder();
         sb.append("<EntityMT>\n");
         sb.append("  <SecurityInformation>\n");
-        sb.append("    <Classification>SECRET</Classification>\n");
+        sb.append("    <Classification>UNCLASSIFIED</Classification>\n");
         sb.append("    <OwnerProducer>USA</OwnerProducer>\n");
         sb.append("  </SecurityInformation>\n");
         sb.append("  <MessageHeader>\n");
@@ -140,9 +153,27 @@ public class Main {
         entity.messageData().kinematics().verticalSpeed().ifPresent(vs ->
             sb.append("      <VerticalSpeed>").append(vs).append("</VerticalSpeed>\n")
         );
+        entity.messageData().kinematics().airspeed().ifPresent(as ->
+            sb.append("      <Airspeed>").append(as).append("</Airspeed>\n")
+        );
+        entity.messageData().kinematics().pitch().ifPresent(p ->
+            sb.append("      <Pitch>").append(p).append("</Pitch>\n")
+        );
+        entity.messageData().kinematics().roll().ifPresent(r ->
+            sb.append("      <Roll>").append(r).append("</Roll>\n")
+        );
         sb.append("    </Kinematics>\n");
         entity.messageData().sourceSystem().ifPresent(src ->
             sb.append("    <SourceSystem>").append(src).append("</SourceSystem>\n")
+        );
+        entity.messageData().flightMode().ifPresent(fm ->
+            sb.append("    <FlightMode>").append(fm).append("</FlightMode>\n")
+        );
+        entity.messageData().activeWaypoint().ifPresent(wp ->
+            sb.append("    <ActiveWaypoint>").append(wp).append("</ActiveWaypoint>\n")
+        );
+        entity.messageData().fuelPercentage().ifPresent(fp ->
+            sb.append("    <FuelPercentage>").append(fp).append("</FuelPercentage>\n")
         );
         sb.append("  </MessageData>\n");
         sb.append("</EntityMT>");
@@ -150,24 +181,37 @@ public class Main {
     }
 
     private static String serializeToJson(EntityMt entity) {
-        return "{\n" +
-            "  \"ObjectState\": \"" + entity.objectState().map(ObjectStateEnum::name).orElse("") + "\",\n" +
-            "  \"MessageData\": {\n" +
-            "    \"EntityID\": { \"UUID\": \"" + entity.messageData().entityId().uuid() + "\" },\n" +
-            "    \"CreationTimestamp\": \"" + entity.messageData().creationTimestamp() + "\",\n" +
-            "    \"EntityStatus\": \"" + entity.messageData().entityStatus() + "\",\n" +
-            "    \"Kinematics\": {\n" +
-            "      \"Latitude\": " + entity.messageData().kinematics().latitude() + ",\n" +
-            "      \"Longitude\": " + entity.messageData().kinematics().longitude() + ",\n" +
-            "      \"Altitude\": " + entity.messageData().kinematics().altitude() + "\n" +
-            "    }\n" +
-            "  }\n" +
-            "}";
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\n");
+        sb.append("  \"ObjectState\": \"").append(entity.objectState().map(ObjectStateEnum::name).orElse("")).append("\",\n");
+        sb.append("  \"SecurityInformation\": {\n");
+        sb.append("    \"Classification\": \"UNCLASSIFIED\",\n");
+        sb.append("    \"OwnerProducer\": \"USA\"\n");
+        sb.append("  },\n");
+        sb.append("  \"MessageData\": {\n");
+        sb.append("    \"EntityID\": { \"UUID\": \"").append(entity.messageData().entityId().uuid()).append("\" },\n");
+        sb.append("    \"CreationTimestamp\": \"").append(entity.messageData().creationTimestamp()).append("\",\n");
+        sb.append("    \"EntityStatus\": \"").append(entity.messageData().entityStatus()).append("\",\n");
+        sb.append("    \"Kinematics\": {\n");
+        sb.append("      \"Latitude\": ").append(entity.messageData().kinematics().latitude()).append(",\n");
+        sb.append("      \"Longitude\": ").append(entity.messageData().kinematics().longitude()).append(",\n");
+        sb.append("      \"Altitude\": ").append(entity.messageData().kinematics().altitude()).append(",\n");
+        sb.append("      \"Airspeed\": ").append(entity.messageData().kinematics().airspeed().orElse(0.0)).append(",\n");
+        sb.append("      \"Pitch\": ").append(entity.messageData().kinematics().pitch().orElse(0.0)).append(",\n");
+        sb.append("      \"Roll\": ").append(entity.messageData().kinematics().roll().orElse(0.0)).append("\n");
+        sb.append("    },\n");
+        sb.append("    \"FlightMode\": \"").append(entity.messageData().flightMode().orElse("")).append("\",\n");
+        sb.append("    \"ActiveWaypoint\": \"").append(entity.messageData().activeWaypoint().orElse("")).append("\",\n");
+        sb.append("    \"FuelPercentage\": ").append(entity.messageData().fuelPercentage().orElse(0.0)).append("\n");
+        sb.append("  }\n");
+        sb.append("}");
+        return sb.toString();
     }
 
     public static void main(String[] args) throws Exception {
         System.out.println("================================================================================");
         System.out.println("🛸 PolyXML: Anduril Lattice SDK ↔ USAF UCI C2 Bridge (Java 21+ Records)");
+        System.out.println("   Autonomous Flying Drone Airplane Telemetry (UNCLASSIFIED)");
         System.out.println("================================================================================");
 
         Path dataPath = findDataFile();
@@ -178,16 +222,23 @@ public class Main {
             extractString(jsonContent, "callsign"),
             extractString(jsonContent, "timestamp"),
             extractString(jsonContent, "source_system"),
+            extractString(jsonContent, "classification"),
             extractString(jsonContent, "status"),
             extractDouble(jsonContent, "latitude", 0.0),
             extractDouble(jsonContent, "longitude", 0.0),
             extractDouble(jsonContent, "altitude_meters", 0.0),
             extractDouble(jsonContent, "heading_degrees", 0.0),
             extractDouble(jsonContent, "ground_speed_mps", 0.0),
-            extractDouble(jsonContent, "vertical_speed_mps", 0.0)
+            extractDouble(jsonContent, "vertical_speed_mps", 0.0),
+            extractDouble(jsonContent, "airspeed_mps", 0.0),
+            extractDouble(jsonContent, "pitch_degrees", 0.0),
+            extractDouble(jsonContent, "roll_degrees", 0.0),
+            extractString(jsonContent, "flight_mode"),
+            extractString(jsonContent, "active_waypoint_id"),
+            extractDouble(jsonContent, "fuel_remaining_percent", 0.0)
         );
 
-        System.out.printf("Ingesting Lattice Track: %s (ID: %s)%n", lattice.callsign(), lattice.id());
+        System.out.printf("Ingesting Autonomous Drone Telemetry: %s (ID: %s)%n", lattice.callsign(), lattice.id());
 
         long startXml = System.nanoTime();
         EntityMt uciEntity = translateLatticeToUCI(lattice);
@@ -211,6 +262,9 @@ public class Main {
         }
         if (!xmlOutput.contains(lattice.id())) {
             throw new AssertionError("Missing UUID in XML output");
+        }
+        if (!xmlOutput.contains("UNCLASSIFIED")) {
+            throw new AssertionError("Missing UNCLASSIFIED classification in XML output");
         }
 
         System.out.println("\n✅ Java 21+ Lattice ↔ UCI Bridge executed successfully!");

@@ -1,9 +1,9 @@
 {
   "id": "e4a71d80-86d1-4cb3-91f9-8d07e600572b",
-  "callsign": "ALTIUS-600M-EDGE-01",
+  "callsign": "FURY-UAV-01",
   "timestamp": "2026-09-20T11:00:00Z",
   "source_system": "LATTICE_MESH_NODE_DELTA",
-  "classification": "SECRET",
+  "classification": "UNCLASSIFIED",
   "status": "CONFIRMED",
   "location": {
     "latitude": 34.9125,
@@ -13,6 +13,26 @@
   "kinematics": {
     "heading_degrees": 285.5,
     "ground_speed_mps": 165.2,
-    "vertical_speed_mps": -1.5
+    "vertical_speed_mps": -1.5,
+    "airspeed_mps": 172.4,
+    "pitch_degrees": 2.1,
+    "roll_degrees": -1.4
+  },
+  "flight_plan": {
+    "flight_mode": "AUTONOMOUS_WAYPOINT_NAVIGATION",
+    "mission_id": "MISSION-MOJAVE-SURVEILLANCE-42",
+    "active_waypoint_id": "WP-DELTA-04",
+    "target_altitude_meters": 4500.0,
+    "target_airspeed_mps": 175.0,
+    "fuel_remaining_percent": 84.6,
+    "battery_backup_percent": 99.2,
+    "estimated_endurance_minutes": 245.0
+  },
+  "sensor_payload": {
+    "sensor_type": "EO_IR_MULTISPECTRAL_GIMBAL",
+    "gimbal_azimuth_deg": 42.5,
+    "gimbal_elevation_deg": -28.0,
+    "laser_designator_armed": false,
+    "tracking_mode": "GEO_POINT_LOITER"
   }
 }

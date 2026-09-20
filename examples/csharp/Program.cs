@@ -18,7 +18,16 @@ public record LatticeLocation(
 public record LatticeKinematics(
     [property: JsonPropertyName("heading_degrees")] double? HeadingDegrees,
     [property: JsonPropertyName("ground_speed_mps")] double? GroundSpeedMps,
-    [property: JsonPropertyName("vertical_speed_mps")] double? VerticalSpeedMps
+    [property: JsonPropertyName("vertical_speed_mps")] double? VerticalSpeedMps,
+    [property: JsonPropertyName("airspeed_mps")] double? AirspeedMps,
+    [property: JsonPropertyName("pitch_degrees")] double? PitchDegrees,
+    [property: JsonPropertyName("roll_degrees")] double? RollDegrees
+);
+
+public record LatticeFlightPlan(
+    [property: JsonPropertyName("flight_mode")] string? FlightMode,
+    [property: JsonPropertyName("active_waypoint_id")] string? ActiveWaypointId,
+    [property: JsonPropertyName("fuel_remaining_percent")] double? FuelRemainingPercent
 );
 
 public record LatticeEntity(
@@ -29,7 +38,8 @@ public record LatticeEntity(
     [property: JsonPropertyName("classification")] string? Classification,
     [property: JsonPropertyName("status")] string? Status,
     [property: JsonPropertyName("location")] LatticeLocation Location,
-    [property: JsonPropertyName("kinematics")] LatticeKinematics Kinematics
+    [property: JsonPropertyName("kinematics")] LatticeKinematics Kinematics,
+    [property: JsonPropertyName("flight_plan")] LatticeFlightPlan? FlightPlan
 );
 
 public static class Program
@@ -74,7 +84,10 @@ public static class Program
             lattice.Location.AltitudeMeters,
             lattice.Kinematics.HeadingDegrees,
             lattice.Kinematics.GroundSpeedMps,
-            lattice.Kinematics.VerticalSpeedMps
+            lattice.Kinematics.VerticalSpeedMps,
+            lattice.Kinematics.AirspeedMps,
+            lattice.Kinematics.PitchDegrees,
+            lattice.Kinematics.RollDegrees
         );
 
         var mdt = new EntityMdt(
@@ -82,12 +95,15 @@ public static class Program
             ts,
             status,
             kinematics,
-            lattice.SourceSystem
+            lattice.SourceSystem,
+            lattice.FlightPlan?.FlightMode,
+            lattice.FlightPlan?.ActiveWaypointId,
+            lattice.FlightPlan?.FuelRemainingPercent
         );
 
         return new EntityMt(ObjectStateEnum.Active, mdt)
         {
-            SecurityInformation = new SecurityInformationType(ClassificationEnum.Secret, "USA"),
+            SecurityInformation = new SecurityInformationType(ClassificationEnum.Unclassified, "USA"),
             MessageHeader = new HeaderType(
                 $"MSG-{lattice.Id.Substring(0, 8).ToUpperInvariant()}",
                 ts,
@@ -100,13 +116,14 @@ public static class Program
     {
         Console.WriteLine("================================================================================");
         Console.WriteLine("🛸 PolyXML: Anduril Lattice SDK ↔ USAF UCI C2 Bridge (C# 12 / .NET 8)");
+        Console.WriteLine("   Autonomous Flying Drone Airplane Telemetry (UNCLASSIFIED)");
         Console.WriteLine("================================================================================");
 
         var dataPath = FindDataFile();
         var jsonBytes = File.ReadAllBytes(dataPath);
         var lattice = JsonSerializer.Deserialize<LatticeEntity>(jsonBytes)!;
 
-        Console.WriteLine($"Ingesting Lattice Track: {lattice.Callsign ?? "N/A"} (ID: {lattice.Id})");
+        Console.WriteLine($"Ingesting Autonomous Drone Telemetry: {lattice.Callsign ?? "N/A"} (ID: {lattice.Id})");
 
         // Benchmark XML Serialization
         var swXml = Stopwatch.StartNew();
@@ -153,6 +170,9 @@ public static class Program
         Console.WriteLine($"    Restored UUID: {restoredUci?.MessageData.EntityId.Uuid}");
         Console.WriteLine($"    Restored Callsign: {restoredUci?.MessageData.EntityId.Callsign}");
         Console.WriteLine($"    Restored Coordinates: ({restoredUci?.MessageData.Kinematics.Latitude}, {restoredUci?.MessageData.Kinematics.Longitude})");
+        Console.WriteLine($"    Restored Airspeed: {restoredUci?.MessageData.Kinematics.Airspeed} m/s | Pitch: {restoredUci?.MessageData.Kinematics.Pitch}° | Roll: {restoredUci?.MessageData.Kinematics.Roll}°");
+        Console.WriteLine($"    Restored Flight Mode: {restoredUci?.MessageData.FlightMode}");
+        Console.WriteLine($"    Restored Classification: {restoredUci?.SecurityInformation.Classification}");
 
         if (restoredUci?.MessageData.EntityId.Uuid != lattice.Id)
         {
@@ -166,6 +186,10 @@ public static class Program
         if (!xmlOutput.Contains(lattice.Id))
         {
             throw new InvalidOperationException("Missing UUID in XML output");
+        }
+        if (!xmlOutput.Contains("UNCLASSIFIED"))
+        {
+            throw new InvalidOperationException("Missing UNCLASSIFIED in XML output");
         }
 
         Console.WriteLine("\n✅ C# 12 Lattice ↔ UCI Bridge executed successfully with dual attributes!");

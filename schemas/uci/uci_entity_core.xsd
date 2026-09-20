@@ -68,6 +68,9 @@
             <xs:element name="EntityStatus" type="uci:EntityStatusEnum"/>
             <xs:element name="Kinematics" type="uci:KinematicsType"/>
             <xs:element name="SourceSystem" type="xs:string" minOccurs="0"/>
+            <xs:element name="FlightMode" type="xs:string" minOccurs="0"/>
+            <xs:element name="ActiveWaypoint" type="xs:string" minOccurs="0"/>
+            <xs:element name="FuelPercentage" type="xs:double" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 
@@ -79,7 +82,7 @@
         </xs:sequence>
     </xs:complexType>
 
-    <!-- Geospatial Position & Motion Dynamics -->
+    <!-- Geospatial Position & Motion Dynamics (Autonomous Drone Airplane Flight Telemetry) -->
     <xs:complexType name="KinematicsType">
         <xs:sequence>
             <xs:element name="Latitude" type="xs:double"/>
@@ -88,6 +91,9 @@
             <xs:element name="Heading" type="xs:double" minOccurs="0"/>
             <xs:element name="GroundSpeed" type="xs:double" minOccurs="0"/>
             <xs:element name="VerticalSpeed" type="xs:double" minOccurs="0"/>
+            <xs:element name="Airspeed" type="xs:double" minOccurs="0"/>
+            <xs:element name="Pitch" type="xs:double" minOccurs="0"/>
+            <xs:element name="Roll" type="xs:double" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 
