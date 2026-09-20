@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:uci="https://www.vdl.afrl.af.mil/programs/oam"
+           targetNamespace="https://www.vdl.afrl.af.mil/programs/oam"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified"
+           version="002.5.0">
+
+    <xs:annotation>
+        <xs:documentation>
+            Open-Arsenal UCI v2.5 Core Entity Schema Subset.
+            Derived from AFRL OAC-STD-002 Rev E (UCI Schema v2.5).
+            Distribution Statement A: Approved for public release; distribution is unlimited.
+        </xs:documentation>
+    </xs:annotation>
+
+    <!-- Top-Level UCI Entity Message Element -->
+    <xs:element name="Entity" type="uci:EntityMT">
+        <xs:annotation>
+            <xs:documentation>
+                This message represents an object (vehicle, weapon, person, autonomous asset) in the battlespace.
+            </xs:documentation>
+        </xs:annotation>
+    </xs:element>
+
+    <!-- Entity Message Type (MT) -->
+    <xs:complexType name="EntityMT">
+        <xs:complexContent>
+            <xs:extension base="uci:MessageType">
+                <xs:sequence>
+                    <xs:element name="ObjectState" type="uci:ObjectStateEnum" minOccurs="0"/>
+                    <xs:element name="MessageData" type="uci:EntityMDT"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <!-- Base Message Type with Security & Header -->
+    <xs:complexType name="MessageType" abstract="true">
+        <xs:sequence>
+            <xs:element name="SecurityInformation" type="uci:SecurityInformationType"/>
+            <xs:element name="MessageHeader" type="uci:HeaderType"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Security Information (Classification) -->
+    <xs:complexType name="SecurityInformationType">
+        <xs:sequence>
+            <xs:element name="Classification" type="uci:ClassificationEnum"/>
+            <xs:element name="OwnerProducer" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Common Message Header -->
+    <xs:complexType name="HeaderType">
+        <xs:sequence>
+            <xs:element name="MessageID" type="xs:string"/>
+            <xs:element name="Timestamp" type="xs:dateTime"/>
+            <xs:element name="OriginatorID" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Entity Message Data Type (MDT) -->
+    <xs:complexType name="EntityMDT">
+        <xs:sequence>
+            <xs:element name="EntityID" type="uci:EntityID_Type"/>
+            <xs:element name="CreationTimestamp" type="xs:dateTime"/>
+            <xs:element name="EntityStatus" type="uci:EntityStatusEnum"/>
+            <xs:element name="Kinematics" type="uci:KinematicsType"/>
+            <xs:element name="SourceSystem" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Unique Entity Identifier -->
+    <xs:complexType name="EntityID_Type">
+        <xs:sequence>
+            <xs:element name="UUID" type="xs:string"/>
+            <xs:element name="Callsign" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Geospatial Position & Motion Dynamics -->
+    <xs:complexType name="KinematicsType">
+        <xs:sequence>
+            <xs:element name="Latitude" type="xs:double"/>
+            <xs:element name="Longitude" type="xs:double"/>
+            <xs:element name="Altitude" type="xs:double"/>
+            <xs:element name="Heading" type="xs:double" minOccurs="0"/>
+            <xs:element name="GroundSpeed" type="xs:double" minOccurs="0"/>
+            <xs:element name="VerticalSpeed" type="xs:double" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Enumerations -->
+    <xs:simpleType name="ObjectStateEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NEW"/>
+            <xs:enumeration value="ACTIVE"/>
+            <xs:enumeration value="MODIFIED"/>
+            <xs:enumeration value="REMOVED"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="ClassificationEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="UNCLASSIFIED"/>
+            <xs:enumeration value="CONFIDENTIAL"/>
+            <xs:enumeration value="SECRET"/>
+            <xs:enumeration value="TOP_SECRET"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="EntityStatusEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="POTENTIAL"/>
+            <xs:enumeration value="TENTATIVE"/>
+            <xs:enumeration value="CONFIRMED"/>
+            <xs:enumeration value="LOST"/>
+            <xs:enumeration value="DROPPED"/>
+            <xs:enumeration value="DESTROYED"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>

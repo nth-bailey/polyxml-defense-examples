@@ -1,0 +1,27 @@
+{
+  "name": "polyxml-examples",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nth-bailey/polyxml-examples.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/nth-bailey/polyxml-examples/issues"
+  },
+  "homepage": "https://github.com/nth-bailey/polyxml-examples#readme",
+  "dependencies": {
+    "zod": "^4.6.5"
+  }
+}

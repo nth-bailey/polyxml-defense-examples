@@ -1,0 +1,12 @@
+{
+  "name": "lattice-uci-bridge-ts",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Anduril Lattice SDK to USAF UCI C2 Bridge (TypeScript)",
+  "scripts": {
+    "start": "node --experimental-strip-types index.ts"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}

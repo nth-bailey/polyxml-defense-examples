@@ -1,0 +1,18 @@
+{
+  "id": "e4a71d80-86d1-4cb3-91f9-8d07e600572b",
+  "callsign": "ALTIUS-600M-EDGE-01",
+  "timestamp": "2026-09-20T11:00:00Z",
+  "source_system": "LATTICE_MESH_NODE_DELTA",
+  "classification": "SECRET",
+  "status": "CONFIRMED",
+  "location": {
+    "latitude": 34.9125,
+    "longitude": -117.8833,
+    "altitude_meters": 4500.0
+  },
+  "kinematics": {
+    "heading_degrees": 285.5,
+    "ground_speed_mps": 165.2,
+    "vertical_speed_mps": -1.5
+  }
+}

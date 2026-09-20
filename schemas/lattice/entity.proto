@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package anduril.entitymanager.v1;
+
+// Anduril Lattice SDK - Entity Definition
+// Canonical definition mirroring buf.build/anduril/lattice-sdk
+
+message Entity {
+  // Unique entity ID (UUID / track ID)
+  string id = 1;
+
+  // Track / asset callsign (e.g. "ALTIUS-600M-01", "GHOST-4")
+  string callsign = 2;
+
+  // Detection / update timestamp in ISO-8601 or epoch millis
+  string timestamp = 3;
+
+  // Originating subsystem or node ID
+  string source_system = 4;
+
+  // Security classification level
+  Classification classification = 5;
+
+  // Lifecycle status of the entity
+  Status status = 6;
+
+  // Geospatial position
+  Location location = 7;
+
+  // Velocity and motion dynamics
+  Kinematics kinematics = 8;
+}
+
+message Location {
+  // WGS-84 Latitude in degrees [-90.0, 90.0]
+  double latitude = 1;
+
+  // WGS-84 Longitude in degrees [-180.0, 180.0]
+  double longitude = 2;
+
+  // Altitude above MSL in meters
+  double altitude_meters = 3;
+}
+
+message Kinematics {
+  // True heading in degrees [0.0, 360.0]
+  double heading_degrees = 1;
+
+  // Ground speed in meters per second
+  double ground_speed_mps = 2;
+
+  // Vertical speed (climb/descent) in meters per second
+  double vertical_speed_mps = 3;
+}
+
+enum Classification {
+  CLASSIFICATION_UNSPECIFIED = 0;
+  UNCLASSIFIED = 1;
+  CONFIDENTIAL = 2;
+  SECRET = 3;
+  TOP_SECRET = 4;
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  POTENTIAL = 1;
+  TENTATIVE = 2;
+  CONFIRMED = 3;
+  LOST = 4;
+  DROPPED = 5;
+  DESTROYED = 6;
+}
