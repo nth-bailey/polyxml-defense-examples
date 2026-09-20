@@ -2,7 +2,7 @@
 
 # 🛸 PolyXML Polyglot Examples: Anduril Lattice SDK ↔ USAF UCI C2 Bridge
 
-[![CI](https://github.com/nth-bailey/polyxml-examples/actions/workflows/ci.yml/badge.svg)](https://github.com/nth-bailey/polyxml-examples/actions/workflows/ci.yml)
+[![CI](https://github.com/nth-bailey/polyxml-defense-examples/actions/workflows/ci.yml/badge.svg)](https://github.com/nth-bailey/polyxml-defense-examples/actions/workflows/ci.yml)
 [![PolyXML](https://img.shields.io/badge/PolyXML-v0.14.1-blueviolet.svg?style=flat-square)](https://github.com/nth-bailey/PolyXML)
 [![Standard: USAF UCI v2.5](https://img.shields.io/badge/Standard-USAF%20UCI%20v2.5-003366.svg?style=flat-square)](https://github.com/open-arsenal/uci)
 [![Source: Anduril Lattice SDK](https://img.shields.io/badge/Source-Anduril%20Lattice%20SDK-black.svg?style=flat-square)](https://buf.build/anduril/lattice-sdk)
@@ -506,7 +506,7 @@ All schemas valid (Total: 5557 types, 722 elements).
 ## 📂 Repository Structure
 
 ```text
-polyxml-examples/
+polyxml-defense-examples/
 ├── .github/workflows/ci.yml       # GitHub Actions multi-language CI pipeline
 ├── polyxml.toml                   # PolyXML workspace compilation manifest
 ├── go.work                        # Go workspace manifest
@@ -563,8 +563,8 @@ To build and run all 7 language examples, ensure the relevant runtimes are insta
 Run the unified test runner to compile schemas and verify all 7 languages sequentially:
 
 ```bash
-git clone https://github.com/nth-bailey/polyxml-examples.git
-cd polyxml-examples
+git clone https://github.com/nth-bailey/polyxml-defense-examples.git
+cd polyxml-defense-examples
 ./scripts/run_all.sh
 ```
 
