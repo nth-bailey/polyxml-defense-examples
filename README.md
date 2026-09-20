@@ -7,7 +7,7 @@
 [![Standard: USAF UCI v2.5](https://img.shields.io/badge/Standard-USAF%20UCI%20v2.5-003366.svg?style=flat-square)](https://github.com/open-arsenal/uci)
 [![Source: Anduril Lattice SDK](https://img.shields.io/badge/Source-Anduril%20Lattice%20SDK-black.svg?style=flat-square)](https://buf.build/anduril/lattice-sdk)
 [![Data-Binding: Dual XML & JSON](https://img.shields.io/badge/Data--Binding-XML%20%E2%86%94%20JSON%20Parity-orange.svg?style=flat-square)](#-first-class-dual-format-xml--json-interoperability)
-[![Languages: 7](https://img.shields.io/badge/Languages-Rust%20%7C%20Python%20%7C%20Go%20%7C%20C%2B%2B%20%7C%20Java%20%7C%20TypeScript%20%7C%20C%23-blue.svg?style=flat-square)](#polyglot-implementations)
+[![Languages: 7](https://img.shields.io/badge/Languages-Rust%20%7C%20Python%20%7C%20Go%20%7C%20C%2B%2B%20%7C%20Java%20%7C%20TypeScript%20%7C%20C%23-blue.svg?style=flat-square)](#-polyglot-benchmark--implementations)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 
 **Next-generation defense autonomy meets battle-tested mission command & control.**
@@ -23,6 +23,7 @@
 - [Executive Summary](#-executive-summary)
 - [System Architecture](#-system-architecture)
 - [First-Class Dual-Format XML ↔ JSON Interoperability](#-first-class-dual-format-xml--json-interoperability)
+- [Code Generation Commands (`polyxml build` & `polyxml generate`)](#-code-generation-commands)
 - [Semantic Field Mapping](#-semantic-field-mapping)
 - [Polyglot Benchmark & Implementations](#-polyglot-benchmark--implementations)
   - [1. Rust (Zero-Copy Streaming)](#1-rust-zero-copy-streaming)
@@ -135,6 +136,85 @@ flowchart TD
 
 ---
 
+## 🛠️ Code Generation Commands
+
+PolyXML supports two complementary code generation workflows: **workspace-driven multi-target compilation** (`polyxml build`) and **targeted standalone CLI generation** (`polyxml generate`).
+
+### 1. Workspace-Driven Multi-Target Generation (`polyxml build`)
+
+PolyXML compiles schemas across multiple languages simultaneously using a unified workspace manifest ([`polyxml.toml`](polyxml.toml)):
+
+```toml
+[workspace]
+name = "anduril-lattice-uci-bridge"
+schemas = ["schemas/uci/uci_entity_core.xsd"]
+output_base_dir = "generated"
+
+[[generate]]
+target = "rust"
+output = "rust"
+zero_copy = true
+codecs = true
+
+[[generate]]
+target = "python"
+output = "python"
+backend = "dataclass"
+codecs = true
+
+[[generate]]
+target = "go"
+output = "go"
+package = "uci"
+
+[[generate]]
+target = "cpp"
+output = "cpp"
+
+[[generate]]
+target = "java"
+output = "java"
+package = "com.enterprise.uci"
+
+[[generate]]
+target = "typescript"
+output = "typescript"
+zod = true
+
+[[generate]]
+target = "csharp"
+output = "csharp"
+namespace = "Enterprise.Uci"
+```
+
+Compile all 7 target languages in a single command:
+```bash
+polyxml build
+```
+
+---
+
+### 2. Standalone CLI Generation Commands (`polyxml generate`)
+
+Generate strongly-typed domain models for any specific language on demand with fine-grained compiler options:
+
+| Target Language | PolyXML CLI Generation Command | Key Flags Explained |
+| :--- | :--- | :--- |
+| **🦀 Rust** | `polyxml generate schemas/uci/uci_entity_core.xsd -l rust --zero-copy --codecs -o generated/rust` | `--zero-copy` (borrows `Cow<'a, str>`), `--codecs` (emits streaming XML/JSON codecs) |
+| **🐍 Python** | `polyxml generate schemas/uci/uci_entity_core.xsd -l python -b dataclass --codecs -o generated/python` | `-b dataclass` (or `pydantic`), `--codecs` (synthesizes `.to_xml()`, `.to_json()`) |
+| **🐹 Go** | `polyxml generate schemas/uci/uci_entity_core.xsd -l go -p uci -o generated/go` | `-p uci` (sets Go package name, emits dual `xml` and `json` tags) |
+| **⚡ C++20** | `polyxml generate schemas/uci/uci_entity_core.xsd -l cpp -p "polyxml::generated" -o generated/cpp` | `-p` (C++ namespace, emits header-only value types & concepts) |
+| **☕ Java 21+** | `polyxml generate schemas/uci/uci_entity_core.xsd -l java -p "com.enterprise.uci" -o generated/java` | `-p` (Java package declaration, emits immutable `record`s) |
+| **🌐 TypeScript** | `polyxml generate schemas/uci/uci_entity_core.xsd -l ts --zod -o generated/typescript` | `--zod` (synthesizes runtime Zod schemas alongside TS interfaces) |
+| **🔷 C# 12** | `polyxml generate schemas/uci/uci_entity_core.xsd -l csharp -p "Enterprise.Uci" -o generated/csharp` | `-p` (C# namespace, emits primary constructor records with dual attributes) |
+
+Run the automated generation script across all 7 targets:
+```bash
+./scripts/generate_all.sh
+```
+
+---
+
 ## 🗺 Semantic Field Mapping
 
 The bridge translates telemetry from `anduril.entitymanager.v1.Entity` into compliant USAF UCI `uci:EntityMT` messages:
@@ -204,7 +284,12 @@ let json_output = uci_msg.to_json_string()?;
 let restored = EntityMt::from_json_str(&json_output)?;
 ```
 
-**Run it:**
+**Generate Code:**
+```bash
+polyxml generate schemas/uci/uci_entity_core.xsd --lang rust --zero-copy --codecs --out generated/rust
+```
+
+**Run Example:**
 ```bash
 cargo run --manifest-path examples/rust/Cargo.toml
 ```
@@ -229,7 +314,12 @@ stream_json = polyxml.xml_to_json(xml_bytes, indent=2)
 stream_xml = polyxml.json_to_xml(stream_json, root="EntityMT", indent=2)
 ```
 
-**Run it:**
+**Generate Code:**
+```bash
+polyxml generate schemas/uci/uci_entity_core.xsd --lang python --backend dataclass --codecs --out generated/python
+```
+
+**Run Example:**
 ```bash
 python3 examples/python/bridge.py
 ```
@@ -256,7 +346,12 @@ var restored uci.EntityMt
 json.Unmarshal(jsonBytes, &restored)
 ```
 
-**Run it:**
+**Generate Code:**
+```bash
+polyxml generate schemas/uci/uci_entity_core.xsd --lang go --package uci --out generated/go
+```
+
+**Run Example:**
 ```bash
 go run ./examples/go
 ```
@@ -277,7 +372,12 @@ entity.message_data.kinematics.longitude = -117.8833;
 static_assert(XmlModel<EntityMt>); // Enforced via C++20 concept
 ```
 
-**Run it:**
+**Generate Code:**
+```bash
+polyxml generate schemas/uci/uci_entity_core.xsd --lang cpp --package "polyxml::generated" --out generated/cpp
+```
+
+**Run Example:**
 ```bash
 cmake -B examples/cpp/build examples/cpp && cmake --build examples/cpp/build && ./examples/cpp/build/lattice_uci_bridge
 ```
@@ -297,7 +397,12 @@ public record KinematicsType(
 ) {}
 ```
 
-**Run it:**
+**Generate Code:**
+```bash
+polyxml generate schemas/uci/uci_entity_core.xsd --lang java --package "com.enterprise.uci" --out generated/java
+```
+
+**Run Example:**
 ```bash
 mvn -f examples/java/pom.xml compile exec:java
 ```
@@ -318,7 +423,12 @@ EntityMtSchema.parse(uciEntity);
 const validatedFromJson: EntityMt = EntityMtSchema.parse(JSON.parse(jsonPayload));
 ```
 
-**Run it:**
+**Generate Code:**
+```bash
+polyxml generate schemas/uci/uci_entity_core.xsd --lang ts --zod --out generated/typescript
+```
+
+**Run Example:**
 ```bash
 node --experimental-strip-types examples/typescript/index.ts
 ```
@@ -340,7 +450,12 @@ var jsonOutput = JsonSerializer.Serialize(uciEntity, jsonOptions);
 var restored = JsonSerializer.Deserialize<EntityMt>(jsonOutput);
 ```
 
-**Run it:**
+**Generate Code:**
+```bash
+polyxml generate schemas/uci/uci_entity_core.xsd --lang csharp --package "Enterprise.Uci" --out generated/csharp
+```
+
+**Run Example:**
 ```bash
 dotnet run --project examples/csharp/LatticeUciAdapter.csproj
 ```
@@ -423,6 +538,7 @@ polyxml-examples/
 │   ├── typescript/                # Web / COP tactical map adapter
 │   └── csharp/                    # .NET 8 tactical planner app
 └── scripts/
+    ├── generate_all.sh            # Standalone CLI generator executing 'polyxml generate' for all 7 targets
     ├── run_all.sh                 # Master test runner executing all 7 languages
     └── run_transcode_demo.sh      # CLI streaming & schema-directed transcode demo
 ```
