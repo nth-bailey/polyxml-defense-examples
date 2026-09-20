@@ -108,6 +108,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n[2] Generated Native JSON on Same Model (latency: {:.2?}):", elapsed_json);
     println!("{}", json_output);
 
+    // Measure JSON deserialization back into zero-copy Rust model
+    let start_from_json = Instant::now();
+    let restored_uci = EntityMt::from_json_str(&json_output)?;
+    let elapsed_from_json = start_from_json.elapsed();
+
+    println!("\n[3] Inherent Zero-Copy JSON Deserialization into EntityMt (latency: {:.2?}):", elapsed_from_json);
+    println!("    Restored UUID: {}", restored_uci.message_data.entity_id.uuid);
+    println!("    Restored Callsign: {:?}", restored_uci.message_data.entity_id.callsign);
+    println!(
+        "    Restored Coordinates: ({}, {})",
+        restored_uci.message_data.kinematics.latitude,
+        restored_uci.message_data.kinematics.longitude
+    );
+
+    assert_eq!(restored_uci.message_data.entity_id.uuid, lattice.id);
+    assert_eq!(restored_uci.message_data.kinematics.latitude, lattice.location.latitude);
+    assert_eq!(restored_uci.message_data.kinematics.longitude, lattice.location.longitude);
+
     println!("\n✅ Rust Lattice ↔ UCI Bridge executed successfully with zero heap allocations!");
     Ok(())
 }

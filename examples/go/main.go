@@ -179,6 +179,26 @@ func main() {
 	fmt.Printf("\n[2] Generated Native JSON on Same Model (latency: %v):\n", jsonElapsed)
 	fmt.Println(string(jsonBytes))
 
+	startFromJSON := time.Now()
+	var restoredEntity uci.EntityMt
+	if err := json.Unmarshal(jsonBytes, &restoredEntity); err != nil {
+		fmt.Fprintf(os.Stderr, "JSON Deserialization error: %v\n", err)
+		os.Exit(1)
+	}
+	fromJSONElapsed := time.Since(startFromJSON)
+
+	fmt.Printf("\n[3] Inherent JSON Deserialization into EntityMt (latency: %v):\n", fromJSONElapsed)
+	fmt.Printf("    Restored UUID: %s\n", restoredEntity.MessageData.EntityID.UUID)
+	if restoredEntity.MessageData.EntityID.Callsign != nil {
+		fmt.Printf("    Restored Callsign: %s\n", *restoredEntity.MessageData.EntityID.Callsign)
+	}
+	fmt.Printf("    Restored Coordinates: (%v, %v)\n", restoredEntity.MessageData.Kinematics.Latitude, restoredEntity.MessageData.Kinematics.Longitude)
+
+	if restoredEntity.MessageData.EntityID.UUID != lattice.ID {
+		fmt.Fprintf(os.Stderr, "Assertion failed: UUID mismatch in JSON roundtrip\n")
+		os.Exit(1)
+	}
+
 	if !strings.Contains(string(xmlBytes), "EntityMT") {
 		fmt.Fprintf(os.Stderr, "Assertion failed: missing EntityMT tag in XML output\n")
 		os.Exit(1)
@@ -188,5 +208,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("\n✅ Go Lattice ↔ UCI Bridge executed successfully!")
+	fmt.Println("\n✅ Go Lattice ↔ UCI Bridge executed successfully with dual struct tags!")
 }

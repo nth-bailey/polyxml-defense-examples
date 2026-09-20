@@ -174,6 +174,20 @@ function main() {
   console.log(`\n[2] Generated Native JSON on Same Model (latency: ${((t3 - t2) * 1000).toFixed(2)} μs):`);
   console.log(jsonOutput);
 
+  const t_parse_start = performance.now();
+  const parsedFromJson = JSON.parse(jsonOutput);
+  const validatedFromJson: EntityMt = EntityMtSchema.parse(parsedFromJson);
+  const t_parse_end = performance.now();
+
+  console.log(`\n[3] Inherent JSON Deserialization & Zod Validation (latency: ${((t_parse_end - t_parse_start) * 1000).toFixed(2)} μs):`);
+  console.log(`    Restored UUID: ${validatedFromJson.messageData.entityId.uuid}`);
+  console.log(`    Restored Callsign: ${validatedFromJson.messageData.entityId.callsign}`);
+  console.log(`    Restored Coordinates: (${validatedFromJson.messageData.kinematics.latitude}, ${validatedFromJson.messageData.kinematics.longitude})`);
+
+  if (validatedFromJson.messageData.entityId.uuid !== lattice.id) {
+    throw new Error("UUID mismatch in TypeScript JSON roundtrip");
+  }
+
   if (!xmlOutput.includes("EntityMT")) {
     throw new Error("Missing EntityMT tag in XML output");
   }

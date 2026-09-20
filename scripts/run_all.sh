@@ -6,7 +6,13 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${ROOT_DIR}"
 
 POLYXML_BIN="polyxml"
-if [ -f "${ROOT_DIR}/../PolyXML/target/release/polyxml" ]; then
+if [ -f "${ROOT_DIR}/../PolyXML/target/release/polyxml" ] && [ -f "${ROOT_DIR}/../PolyXML/target/debug/polyxml" ]; then
+    if [ "${ROOT_DIR}/../PolyXML/target/release/polyxml" -nt "${ROOT_DIR}/../PolyXML/target/debug/polyxml" ]; then
+        POLYXML_BIN="${ROOT_DIR}/../PolyXML/target/release/polyxml"
+    else
+        POLYXML_BIN="${ROOT_DIR}/../PolyXML/target/debug/polyxml"
+    fi
+elif [ -f "${ROOT_DIR}/../PolyXML/target/release/polyxml" ]; then
     POLYXML_BIN="${ROOT_DIR}/../PolyXML/target/release/polyxml"
 elif [ -f "${ROOT_DIR}/../PolyXML/target/debug/polyxml" ]; then
     POLYXML_BIN="${ROOT_DIR}/../PolyXML/target/debug/polyxml"

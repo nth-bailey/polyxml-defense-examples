@@ -144,6 +144,21 @@ public static class Program
         Console.WriteLine($"\n[2] Generated Native JSON on Same Model (latency: {swJson.Elapsed.TotalMicroseconds:F2} μs):");
         Console.WriteLine(jsonOutput);
 
+        // Benchmark Native JSON Deserialization back into EntityMt record
+        var swFromJson = Stopwatch.StartNew();
+        var restoredUci = JsonSerializer.Deserialize<EntityMt>(jsonOutput);
+        swFromJson.Stop();
+
+        Console.WriteLine($"\n[3] Inherent JSON Deserialization into EntityMt (latency: {swFromJson.Elapsed.TotalMicroseconds:F2} μs):");
+        Console.WriteLine($"    Restored UUID: {restoredUci?.MessageData.EntityId.Uuid}");
+        Console.WriteLine($"    Restored Callsign: {restoredUci?.MessageData.EntityId.Callsign}");
+        Console.WriteLine($"    Restored Coordinates: ({restoredUci?.MessageData.Kinematics.Latitude}, {restoredUci?.MessageData.Kinematics.Longitude})");
+
+        if (restoredUci?.MessageData.EntityId.Uuid != lattice.Id)
+        {
+            throw new InvalidOperationException("UUID mismatch in C# JSON roundtrip");
+        }
+
         if (!xmlOutput.Contains("EntityMT"))
         {
             throw new InvalidOperationException("Missing EntityMT in XML output");
@@ -153,6 +168,6 @@ public static class Program
             throw new InvalidOperationException("Missing UUID in XML output");
         }
 
-        Console.WriteLine("\n✅ C# 12 Lattice ↔ UCI Bridge executed successfully!");
+        Console.WriteLine("\n✅ C# 12 Lattice ↔ UCI Bridge executed successfully with dual attributes!");
     }
 }

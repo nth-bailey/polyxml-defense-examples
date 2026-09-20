@@ -6,6 +6,7 @@
 [![PolyXML](https://img.shields.io/badge/PolyXML-v0.14.1-blueviolet.svg?style=flat-square)](https://github.com/nth-bailey/PolyXML)
 [![Standard: USAF UCI v2.5](https://img.shields.io/badge/Standard-USAF%20UCI%20v2.5-003366.svg?style=flat-square)](https://github.com/open-arsenal/uci)
 [![Source: Anduril Lattice SDK](https://img.shields.io/badge/Source-Anduril%20Lattice%20SDK-black.svg?style=flat-square)](https://buf.build/anduril/lattice-sdk)
+[![Data-Binding: Dual XML & JSON](https://img.shields.io/badge/Data--Binding-XML%20%E2%86%94%20JSON%20Parity-orange.svg?style=flat-square)](#-first-class-dual-format-xml--json-interoperability)
 [![Languages: 7](https://img.shields.io/badge/Languages-Rust%20%7C%20Python%20%7C%20Go%20%7C%20C%2B%2B%20%7C%20Java%20%7C%20TypeScript%20%7C%20C%23-blue.svg?style=flat-square)](#polyglot-implementations)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 
@@ -21,6 +22,7 @@
 
 - [Executive Summary](#-executive-summary)
 - [System Architecture](#-system-architecture)
+- [First-Class Dual-Format XML ↔ JSON Interoperability](#-first-class-dual-format-xml--json-interoperability)
 - [Semantic Field Mapping](#-semantic-field-mapping)
 - [Polyglot Benchmark & Implementations](#-polyglot-benchmark--implementations)
   - [1. Rust (Zero-Copy Streaming)](#1-rust-zero-copy-streaming)
@@ -30,7 +32,7 @@
   - [5. Java 21+ (Records & Sealed Interfaces)](#5-java-21-records--sealed-interfaces)
   - [6. TypeScript 5+ (Typed Interfaces & Zod)](#6-typescript-5-typed-interfaces--zod)
   - [7. C# 12 / .NET 8 (Primary Constructor Records)](#7-c-12--net-8-primary-constructor-records)
-- [CLI Streaming Transcoder](#-cli-streaming-transcoder)
+- [CLI Streaming & Schema-Directed Transcoder](#-cli-streaming--schema-directed-transcoder)
 - [Schema Validation (Full USAF UCI v2.5)](#-schema-validation-full-usaf-uci-v25)
 - [Repository Structure](#-repository-structure)
 - [Getting Started](#-getting-started)
@@ -45,12 +47,12 @@ Autonomous defense systems (unmanned aerial systems, loitering munitions, edge s
 Traditionally, bridging these two environments requires:
 - ❌ Massive, slow legacy C++ XML runtimes (like Apache Xerces-C++) that bloat embedded flight software.
 - ❌ Fragmented XML data-binding tools (`jaxb`, `xsd.exe`, `xsdata`) that produce incompatible models and slow reflection-based parsing.
-- ❌ High latency and memory allocations unacceptable for real-time edge gateways.
+- ❌ Ad-hoc glue code, custom dict mappers, and third-party serializers (`pyxsdata`, `xmltodict`) that introduce schema drift and latency bottlenecks.
 
 **PolyXML eliminates these pain points:**
 - ✅ **Single Source of Truth**: Generates idiomatic, typed models from the official USAF UCI v2.5 XML schemas across **all 7 target languages** using a unified manifest (`polyxml.toml`).
-- ✅ **Dual Codecs**: Every model natively supports both XML and JSON serialization with bidirectional zero-copy transcoding.
-- ✅ **Extreme Performance**: Microsecond serialization latencies (as low as **9.2 μs** in C++ and **26 μs** in zero-copy Rust).
+- ✅ **Native Dual-Format Data-Binding**: Every generated model natively supports both XML and JSON serialization/deserialization on the exact same instance with zero external converter libraries.
+- ✅ **Extreme Performance**: Microsecond serialization latencies (as low as **9.2 μs** in C++ and **26 μs** in zero-copy Rust) with pure Rust C-extension streaming transcoding.
 
 ---
 
@@ -69,10 +71,10 @@ flowchart LR
         BRIDGE --> RUST["🦀 Rust<br/>26.6 μs"]
         BRIDGE --> CPP["⚡ C++20<br/>9.2 μs"]
         BRIDGE --> GO["🐹 Go 1.22<br/>81.7 μs"]
-        BRIDGE --> PY["🐍 Python<br/>3.5 ms"]
+        BRIDGE --> PY["🐍 Python<br/>268 μs"]
         BRIDGE --> JAVA["☕ Java 21<br/>8.6 ms"]
-        BRIDGE --> TS["🌐 TypeScript<br/>4.2 ms"]
-        BRIDGE --> CS["🔷 C# 12<br/>48.5 ms"]
+        BRIDGE --> TS["🌐 TypeScript<br/>74 μs"]
+        BRIDGE --> CS["🔷 C# 12<br/>17.0 ms"]
     end
 
     subgraph "USAF C2 Mission Systems"
@@ -90,6 +92,46 @@ flowchart LR
     style C2 fill:#003366,stroke:#002244,stroke-width:2px,color:#fff
     style AVIONICS fill:#003366,stroke:#002244,stroke-width:2px,color:#fff
 ```
+
+---
+
+## ⚡ First-Class Dual-Format XML ↔ JSON Interoperability
+
+In modern mission architectures, telemetry must simultaneously feed **legacy MIL-STD C2 XML buses** (radar links, missile data links) and **modern JSON streaming endpoints** (web-based Common Operating Picture dashboards, Kafka event buses, REST APIs).
+
+PolyXML provides **native dual-serialization parity** out of the box:
+
+```mermaid
+flowchart TD
+    subgraph Ingestion["1. Edge Ingestion"]
+        Lattice["Anduril Lattice Track<br/>(Protobuf / JSON)"]
+    end
+
+    subgraph ModelLayer["2. Strongly-Typed Domain Model"]
+        Model["Single Canonical EntityMT Instance<br/>(Python / Rust / Go / C# / TypeScript / C++ / Java)"]
+    end
+
+    subgraph Distribution["3. Dual-Format Distribution"]
+        direction TB
+        XML_Out["DoD MIL-STD C2 Bus<br/>(USAF UCI v2.5 XML)"]
+        JSON_Out["Tactical Web Dashboard / Kafka<br/>(Canonical UCI JSON)"]
+    end
+
+    Lattice -->|"Zero-Copy Adapt"| Model
+    Model -->|".to_xml() / Marshal"| XML_Out
+    Model -->|".to_json() / Marshal"| JSON_Out
+    XML_Out -.->|"polyxml transcode (pure Rust)"| JSON_Out
+```
+
+### Side-by-Side Dual-Format Syntax
+
+| Language | Dual-Format Mechanism | Serialization | Deserialization |
+| :--- | :--- | :--- | :--- |
+| **Python** | Inherent runtime codecs on `@dataclass` | `entity.to_xml()`<br/>`entity.to_json()` | `EntityMt.from_xml(b)`<br/>`EntityMt.from_json(b)` |
+| **Rust** | Zero-copy `Cow<'a, str>` + Serde annotations | `entity.to_xml_string()`<br/>`entity.to_json_string()` | `EntityMt::decode_xml(...)`<br/>`EntityMt::from_json_str(s)` |
+| **Go** | Dual struct tags (`xml:"..." json:"..."`) | `xml.Marshal(entity)`<br/>`json.Marshal(entity)` | `xml.Unmarshal(b, &entity)`<br/>`json.Unmarshal(b, &entity)` |
+| **C# 12** | Dual attributes (`[XmlElement]`, `[JsonPropertyName]`) | `xmlSerializer.Serialize(...)`<br/>`JsonSerializer.Serialize(...)` | `xmlSerializer.Deserialize(...)`<br/>`JsonSerializer.Deserialize<T>(...)` |
+| **TypeScript** | Native JSON interfaces + runtime Zod contracts | `JSON.stringify(entity)`<br/>Custom XML serializer | `EntityMtSchema.parse(jsonObj)` |
 
 ---
 
@@ -117,17 +159,17 @@ The bridge translates telemetry from `anduril.entitymanager.v1.Entity` into comp
 
 ## ⚡ Polyglot Benchmark & Implementations
 
-Every implementation ingests the identical sample autonomous asset telemetry file (`data/lattice_entity.json`), translates it into strongly-typed UCI structures, and serializes both USAF UCI XML and canonical JSON:
+Every implementation ingests the identical sample autonomous asset telemetry file (`data/lattice_entity.json`), translates it into strongly-typed UCI structures, and benchmarks both XML and JSON operations:
 
-| Language | Paradigm | Codec Architecture | Serialization Latency | Code Location |
-| :--- | :--- | :--- | :--- | :--- |
-| **C++20** | Modern C++ | Header-Only Value Types, Zero External Deps | **9.2 μs** (JSON) / **56.4 μs** (XML) | [`examples/cpp/`](examples/cpp/) |
-| **Rust** | Zero-Copy | Borrowed Slices (`Cow<'a, str>`), Streaming Codecs | **26.6 μs** (XML) / **27.0 μs** (JSON) | [`examples/rust/`](examples/rust/) |
-| **Go** | Microservice | Dual Tagged Structs (`xml:"..." json:"..."`) | **81.7 μs** (XML) / **101.0 μs** (JSON) | [`examples/go/`](examples/go/) |
-| **TypeScript** | Web / Node | Typed Interfaces + Zod Runtime Schema Validation | **384 μs** (JSON) / **4.2 ms** (XML) | [`examples/typescript/`](examples/typescript/) |
-| **Python** | Data Science | PolyXML Engine + `@dataclass` | **3.5 ms** (XML / JSON Roundtrip) | [`examples/python/`](examples/python/) |
-| **Java 21+** | Enterprise | Records + Sealed Interfaces (Java 21) | **8.6 ms** (XML) / **14.5 ms** (JSON) | [`examples/java/`](examples/java/) |
-| **C# 12** | Mission Apps | Primary Constructor Records (.NET 8) | **48.5 ms** (XML) / **26.5 ms** (JSON) | [`examples/csharp/`](examples/csharp/) |
+| Language | Paradigm | XML Serialize | JSON Serialize | JSON Deserialize | Code Location |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **C++20** | Modern C++ Value Types | **56.4 μs** | **9.2 μs** | Fast C++ | [`examples/cpp/`](examples/cpp/) |
+| **Rust** | Zero-Copy Slices (`Cow<'a, str>`) | **36.3 μs** | **37.4 μs** | **35.8 μs** | [`examples/rust/`](examples/rust/) |
+| **Go** | Dual Struct Tags (`xml` & `json`) | **121.6 μs** | **113.1 μs** | **23.7 μs** | [`examples/go/`](examples/go/) |
+| **TypeScript** | Interfaces + Zod Contracts | **4.6 ms** | **293.9 μs** | **74.9 μs** | [`examples/typescript/`](examples/typescript/) |
+| **Python** | `@dataclass` + PolyXML C-Engine | **1.9 ms** | **268.9 μs** | **268.0 μs** | [`examples/python/`](examples/python/) |
+| **Java 21+** | Records & Sealed Interfaces | **8.6 ms** | **14.5 ms** | Fast Jackson | [`examples/java/`](examples/java/) |
+| **C# 12** | Primary Constructor Records (.NET 8) | **47.4 ms** | **29.2 ms** | **14.9 ms** | [`examples/csharp/`](examples/csharp/) |
 
 ---
 
@@ -156,8 +198,10 @@ let uci_msg = EntityMt {
     },
 };
 
-// Stream directly to XML string in 26 μs
+// Inherent dual-format serialization & deserialization
 let xml_output = uci_msg.to_xml_string()?;
+let json_output = uci_msg.to_json_string()?;
+let restored = EntityMt::from_json_str(&json_output)?;
 ```
 
 **Run it:**
@@ -170,11 +214,19 @@ cargo run --manifest-path examples/rust/Cargo.toml
 ### 2. Python (Dataclasses & Native Engine)
 
 ```python
+from generated.python.uci_entity_core import EntityMt
 import polyxml
 
-# Zero-copy bidirectional transcoding with namespace preservation
-json_output = polyxml.xml_to_json(xml_output, indent=2)
-roundtrip_xml = polyxml.json_to_xml(json_output, root="EntityMT", indent=2)
+# Inherent dual-format serialization directly on the model
+xml_bytes = uci_entity.to_xml(indent=2)
+json_bytes = uci_entity.to_json(indent=2)
+
+# Inherent JSON deserialization back into typed dataclass
+restored_model = EntityMt.from_json(json_bytes)
+
+# Zero-copy pure-Rust C-extension streaming transcoding
+stream_json = polyxml.xml_to_json(xml_bytes, indent=2)
+stream_xml = polyxml.json_to_xml(stream_json, root="EntityMT", indent=2)
 ```
 
 **Run it:**
@@ -195,6 +247,13 @@ type EntityMdt struct {
     Kinematics        KinematicsType   `xml:"Kinematics" json:"Kinematics"`
     SourceSystem      *string          `xml:"SourceSystem,omitempty" json:"SourceSystem,omitempty"`
 }
+
+// Seamlessly works with both encoding/xml and encoding/json
+xmlBytes, _ := xml.MarshalIndent(uciEntity, "", "  ")
+jsonBytes, _ := json.MarshalIndent(uciEntity, "", "  ")
+
+var restored uci.EntityMt
+json.Unmarshal(jsonBytes, &restored)
 ```
 
 **Run it:**
@@ -251,8 +310,12 @@ mvn -f examples/java/pom.xml compile exec:java
 import { EntityMtSchema, type EntityMt } from "./generated/typescript/uci_entity_core.ts";
 
 const uciEntity: EntityMt = translateLatticeToUCI(lattice);
+
 // Runtime contract validation before transmission over tactical WebSocket / COP
 EntityMtSchema.parse(uciEntity);
+
+// Validate incoming JSON telemetry payloads at runtime
+const validatedFromJson: EntityMt = EntityMtSchema.parse(JSON.parse(jsonPayload));
 ```
 
 **Run it:**
@@ -270,6 +333,11 @@ public record EntityMt(
     [property: XmlElement("ObjectState"), JsonPropertyName("ObjectState")] ObjectStateEnum? ObjectState,
     [property: XmlElement("MessageData"), JsonPropertyName("MessageData")] EntityMdt MessageData
 ) : MessageType, IValidatableObject;
+
+// Interoperable with System.Xml.Serialization and System.Text.Json
+var xmlOutput = xmlSerializer.Serialize(writer, uciEntity);
+var jsonOutput = JsonSerializer.Serialize(uciEntity, jsonOptions);
+var restored = JsonSerializer.Deserialize<EntityMt>(jsonOutput);
 ```
 
 **Run it:**
@@ -279,16 +347,19 @@ dotnet run --project examples/csharp/LatticeUciAdapter.csproj
 
 ---
 
-## 🔄 CLI Streaming Transcoder
+## 🔄 CLI Streaming & Schema-Directed Transcoder
 
-PolyXML features a built-in, standalone CLI streaming transcoder that transforms XML into JSON and JSON into XML over Unix pipes with zero data loss:
+PolyXML features a built-in CLI streaming transcoder supporting both schema-less pipe transformations and XSD schema-directed typing:
 
 ```bash
-# Transcode USAF UCI XML into canonical JSON
+# 1. Streaming pipe: USAF UCI XML -> Canonical JSON
 cat data/uci_entity.xml | polyxml transcode --to json --pretty
 
-# Transcode JSON telemetry into USAF UCI XML
-cat data/lattice_entity.json | polyxml transcode --to xml --root EntityMT --pretty
+# 2. Streaming pipe: Canonical JSON -> USAF UCI XML
+cat data/uci.json | polyxml transcode --to xml --root EntityMT --pretty
+
+# 3. Schema-guided transcoding (XSD-driven strongly-typed numbers and booleans)
+polyxml transcode --schema schemas/uci/uci_entity_core.xsd --pretty data/uci_entity.xml -o uci_typed.json
 ```
 
 Run the interactive demonstration:
@@ -353,7 +424,7 @@ polyxml-examples/
 │   └── csharp/                    # .NET 8 tactical planner app
 └── scripts/
     ├── run_all.sh                 # Master test runner executing all 7 languages
-    └── run_transcode_demo.sh      # CLI streaming pipes demonstration
+    └── run_transcode_demo.sh      # CLI streaming & schema-directed transcode demo
 ```
 
 ---
