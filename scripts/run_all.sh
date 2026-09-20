@@ -30,6 +30,9 @@ echo "==========================================================================
 
 echo -e "\n[0/8] 📦 Regenerating typed models across all 7 targets via polyxml.toml..."
 "${POLYXML_BIN}" build
+if command -v cargo &>/dev/null && [ -f examples/rust/Cargo.toml ]; then
+    cargo fmt --manifest-path examples/rust/Cargo.toml || true
+fi
 
 echo -e "\n[1/8] 🦀 Testing Rust (Zero-Copy Streaming)..."
 cargo run --manifest-path examples/rust/Cargo.toml

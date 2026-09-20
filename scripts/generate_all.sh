@@ -69,6 +69,11 @@ echo -e "\n[7/7] 🔷 Generating C# 12 / .NET 8 (Primary Constructor Records & D
   --package "Enterprise.Uci" \
   --out generated/csharp
 
+# Format Rust code
+if command -v cargo &>/dev/null && [ -f examples/rust/Cargo.toml ]; then
+    cargo fmt --manifest-path examples/rust/Cargo.toml || true
+fi
+
 echo -e "\n================================================================================"
 echo "✅ Code generation complete across all 7 targets into generated/"
 echo "   Alternatively, build all targets in one command using: polyxml build"

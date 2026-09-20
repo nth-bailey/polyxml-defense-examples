@@ -1,27 +1,21 @@
 {
-  "name": "polyxml-examples",
+  "name": "polyxml-defense-examples",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "example": "examples"
-  },
+  "description": "Anduril Lattice to USAF UCI Telemetry Bridge across 7 PolyXML Languages",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "defense:ts": "node --experimental-strip-types examples/typescript/index.ts",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nth-bailey/polyxml-examples.git"
+    "url": "git+https://github.com/nth-bailey/polyxml-defense-examples.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
   "bugs": {
-    "url": "https://github.com/nth-bailey/polyxml-examples/issues"
+    "url": "https://github.com/nth-bailey/polyxml-defense-examples/issues"
   },
-  "homepage": "https://github.com/nth-bailey/polyxml-examples#readme",
+  "homepage": "https://github.com/nth-bailey/polyxml-defense-examples#readme",
   "dependencies": {
-    "zod": "^4.6.5"
+    "zod": "^3.23.8"
   }
 }
