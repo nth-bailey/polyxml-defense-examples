@@ -584,7 +584,9 @@ cd polyxml-defense-examples
 
 ---
 
-## 📜 License
+## 📜 License & Notices
 
-Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
-All schemas sourced from public US Government releases and open specifications ([Open-Arsenal UCI](https://github.com/open-arsenal/uci) and [Buf Lattice SDK](https://buf.build/anduril/lattice-sdk)).
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for full terms.
+
+For third-party standards, specifications, public domain declarations (USAF UCI v2.5), and trademark notices, see [`NOTICE`](NOTICE).
+All schemas are sourced from public US Government releases (AFRL Distribution Statement A) and open specifications ([Open-Arsenal UCI](https://github.com/open-arsenal/uci) and [Buf Lattice SDK](https://buf.build/anduril/lattice-sdk)).

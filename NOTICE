@@ -1,0 +1,36 @@
+PolyXML Defense Examples
+Copyright (c) 2026 Bailey Nguyen
+
+This project is licensed under the MIT License (see the LICENSE file in the root directory).
+
+================================================================================
+Third-Party Standards, Specifications, and Data Notices
+================================================================================
+
+This software includes, references, or derives data contracts from the following
+third-party specifications and standards:
+
+1. Universal Command and Control Interface (UCI) v2.5
+   - Organization: Air Force Research Laboratory (AFRL) / Open Architecture Management (OAM)
+   - Source Standard: AFRL OAC-STD-002 Rev E (UCI Schema v2.5)
+   - Distribution Statement A: Approved for public release; distribution is unlimited.
+   - Status: Work of the United States Government pursuant to 17 U.S.C. § 105.
+     Such works are not subject to copyright protection within the United States.
+   - Files: schemas/uci/uci_entity_core.xsd, data/uci_entity.xml
+
+2. Anduril Lattice SDK Interoperability Telemetry
+   - Format: Synthetic autonomous flying drone airplane telemetry payload modeled after
+     publicly documented entity management API structures.
+   - Purpose: Provided solely for compatibility, testing, and interoperability demonstration.
+   - Files: data/lattice_entity.json
+
+================================================================================
+Trademark Notices
+================================================================================
+
+- "Anduril" and "Lattice" are registered trademarks or trademarks of Anduril Industries, Inc.
+- "USAF", "United States Air Force", and "AFRL" are trademarks of the United States Department of Defense.
+- All trademarks, service marks, and trade names referenced in this repository are the property
+  of their respective owners. Their mention in this repository does not imply endorsement,
+  sponsorship, or affiliation, and is used strictly for descriptive identification and
+  interoperability demonstration under fair use.
